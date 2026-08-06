@@ -357,8 +357,8 @@ class AccurateService
                         'Accept'        => 'application/json',
                     ])
                     ->get($token->host . '/accurate/api/fixed-asset/list.do', [
-                        'page'        => $page,
-                        'sp.pageSize' => $pageSize,
+                        'sp.page'     => $page,      // Wajib menggunakan awalan sp.page
+                        'sp.pageSize' => $pageSize,  // Wajib menggunakan awalan sp.pageSize
                     ]);
 
                 if ($response->successful()) {
@@ -374,7 +374,7 @@ class AccurateService
             }
 
             if ($attempt < $maxRetries) {
-                sleep($attempt * 3); // backoff: 3s, 6s
+                sleep($attempt * 3);
             }
         }
 
