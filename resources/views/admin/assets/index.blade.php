@@ -90,73 +90,71 @@
 
     <!-- FILTER & PENCARIAN -->
     <form action="{{ request()->url() }}" method="GET" class="relative z-10 bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm mb-6 transition-all">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
-
-            <!-- Cari Aset -->
-            <div class="lg:col-span-3 space-y-1.5">
-                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Cari Aset</label>
-                <div class="relative">
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none"
-                        placeholder="Nama aset, kode, serial...">
-                </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+        
+        <!-- Cari Aset -->
+        <div class="lg:col-span-3 space-y-1.5">
+            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Cari Aset</label>
+            <div class="relative">
+                <input type="text" name="search" value="{{ request('search') }}"
+                    class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none"
+                    placeholder="Nama aset, kode, serial...">
             </div>
-
-            <!-- Kategori -->
-            <div class="lg:col-span-2 space-y-1.5">
-                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
-                <select name="category_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
-                    <option value="">Semua Kategori</option>
-                    @foreach($categories ?? [] as $category)
-                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                        {{ strtoupper($category->name) }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Lokasi -->
-            <div class="lg:col-span-2 space-y-1.5">
-                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Lokasi</label>
-                <select name="room_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
-                    <option value="">Semua Lokasi</option>
-                    @foreach($locations ?? [] as $loc)
-                    <option value="{{ $loc->id }}" {{ request('room_id') == $loc->id ? 'selected' : '' }}>
-                        {{ $loc->name }} {{ $loc->parent ? '('.$loc->parent->name.')' : '' }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Status -->
-            <div class="lg:col-span-2 space-y-1.5">
-                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
-                <select name="status" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
-                    <option value="">Semua Status</option>
-                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                    <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                </select>
-            </div>
-
-            <!-- Tombol Aksi (Filter & Reset) -->
-            <div class="lg:col-span-3 flex items-center gap-2">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm hover:shadow-blue-500/20 active:scale-95 text-center flex items-center justify-center gap-1.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-                    </svg>
-                    Filter
-                </button>
-
-                @if(request()->anyFilled(['search', 'category_id', 'room_id', 'status']))
-                <a href="{{ request()->url() }}" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-95 text-center flex items-center justify-center">
-                    Reset
-                </a>
-                @endif
-            </div>
-
         </div>
-    </form>
+
+        <!-- Kategori -->
+        <div class="lg:col-span-2 space-y-1.5">
+            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
+            <select name="category_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                <option value="">Semua Kategori</option>
+                @foreach($categories ?? [] as $category)
+                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                    {{ strtoupper($category->name) }}
+                </option>
+                @endforeach
+            </select>
+        </div>
+
+        <!-- Lokasi -->
+        <div class="lg:col-span-2 space-y-1.5">
+            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Lokasi</label>
+            <select name="room_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                <option value="">Semua Lokasi</option>
+                @foreach($locations ?? [] as $loc)
+                <option value="{{ $loc->id }}" {{ request('room_id') == $loc->id ? 'selected' : '' }}>
+                    {{ $loc->name }} {{ $loc->parent ? '('.$loc->parent->name.')' : '' }}
+                </option>
+                @endforeach
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div class="lg:col-span-2 space-y-1.5">
+            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
+            <select name="status" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                <option value="">Semua Status</option>
+                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+            </select>
+        </div>
+
+        <!-- Tombol Aksi (Filter & Reset) -->
+        <div class="lg:col-span-3 flex items-center gap-2">
+            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm hover:shadow-blue-500/20 active:scale-95 text-center flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                Filter
+            </button>
+            
+            @if(request()->anyFilled(['search', 'category_id', 'room_id', 'status']))
+            <a href="{{ request()->url() }}" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-95 text-center flex items-center justify-center">
+                Reset
+            </a>
+            @endif
+        </div>
+
+    </div>
+</form>
 
     <!-- TOMBOL AKSI CETAK QR MASSAL -->
     <div class="relative z-10 flex flex-wrap gap-2 mb-4">
@@ -640,48 +638,52 @@
 
 <script>
     function openDetailModal(data) {
-        document.getElementById('m-name').innerText = data.name ?? '-';
-        document.getElementById('m-code').innerText = data.asset_code ?? '-';
-        document.getElementById('m-accurate').innerText = data.accurate_no ?? '-';
-        document.getElementById('m-serial').innerText = data.serial_number ?? '-';
+    const setSafeText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+    };
 
-        // Format mata uang untuk harga dan nilai buku
-        document.getElementById('m-price').innerText = data.purchase_price ? new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR'
-        }).format(data.purchase_price) : 'Rp 0';
-        document.getElementById('m-bookvalue').innerText = data.book_value ? new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR'
-        }).format(data.book_value) : 'Rp 0';
+    setSafeText('m-name', data.name ?? '-');
+    setSafeText('m-code', data.asset_code ?? '-');
+    setSafeText('m-accurate', data.accurate_no ?? '-');
+    setSafeText('m-serial', data.serial_number ?? '-');
+    
+    setSafeText('m-price', data.purchase_price ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data.purchase_price) : 'Rp 0');
+    setSafeText('m-bookvalue', data.book_value ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data.book_value) : 'Rp 0');
+    
+    setSafeText('m-purchase-date', data.purchase_date ?? '-');
+    setSafeText('m-estimated-life', data.estimated_life ? `${data.estimated_life} Tahun` : '-');
+    setSafeText('m-quantity', data.quantity ?? 1);
 
-        // Informasi tambahan yang ditambahkan
-        document.getElementById('m-purchase-date').innerText = data.purchase_date ?? '-';
-        document.getElementById('m-estimated-life').innerText = data.estimated_life ? `${data.estimated_life} Tahun` : '-';
-        document.getElementById('m-quantity').innerText = data.quantity ?? 1;
+    setSafeText('m-desc', data.description ?? '-');
+    setSafeText('m-category', data.category ?? '-');
+    setSafeText('m-department', data.department ?? '-');
+    setSafeText('m-status', data.status ?? '-');
+    setSafeText('m-location', data.location ?? '-');
+    
+    const subLocationEl = document.getElementById('m-sublocation');
+    if (subLocationEl) {
+        subLocationEl.innerText = `Gedung: ${data.building ?? '-'} | Lt: ${data.floor ?? '-'} | Ruang: ${data.room ?? '-'}`;
+    }
 
-        document.getElementById('m-desc').innerText = data.description ?? '-';
-        document.getElementById('m-category').innerText = data.category ?? '-';
-        document.getElementById('m-department').innerText = data.department ?? '-';
-        document.getElementById('m-status').innerText = data.status ?? '-';
+    const printBtn = document.getElementById('m-print-btn');
+    if (printBtn) printBtn.href = data.print_url ?? '#';
 
-        document.getElementById('m-location').innerText = data.location ?? '-';
-        document.getElementById('m-sublocation').innerText = `Gedung: ${data.building ?? '-'} | Lt: ${data.floor ?? '-'} | Ruang: ${data.room ?? '-'}`;
-
-        document.getElementById('m-print-btn').href = data.print_url ?? '#';
-
-        const qrContainer = document.getElementById('m-qr-container');
+    const qrContainer = document.getElementById('m-qr-container');
+    if (qrContainer) {
         qrContainer.innerHTML = '';
-        if (data.qr_payload) {
+        if (data.qr_payload && typeof QRCode !== 'undefined') {
             new QRCode(qrContainer, {
                 text: data.qr_payload,
                 width: 110,
                 height: 110
             });
         }
-
-        document.getElementById('modalDetailAsset').classList.remove('hidden');
     }
+
+    const modal = document.getElementById('modalDetailAsset');
+    if (modal) modal.classList.remove('hidden');
+}
 
     function closeDetailModal() {
         document.getElementById('modalDetailAsset').classList.add('hidden');
