@@ -23,6 +23,16 @@ class AssetLocation extends Model
     ];
 
 
+    public function parent()
+    {
+        return $this->belongsTo(AssetLocation::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(AssetLocation::class, 'parent_id');
+    }
+    
     /**
      * Relasi ke Department
      */

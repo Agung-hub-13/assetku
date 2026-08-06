@@ -19,6 +19,8 @@ class AssetSyncService
 
     /**
      * Helper untuk validasi prefix kode barang yang diizinkan.
+     * Satu-satunya tempat filtering prefix — dipakai baik oleh full sync
+     * maupun single-item sync (webhook), supaya tidak ada logic ganda yang bisa beda.
      */
     protected function isAllowedAssetCode(?string $accurateNo): bool
     {
@@ -40,79 +42,116 @@ class AssetSyncService
 
     /**
      * FULL SYNC
+     *
+     * $specificId diisi → sync 1 item saja.
+     * $specificId kosong → tarik SEMUA fixed asset dari Accurate secara streaming
+     * (per-item langsung diproses & disimpan ke DB begitu diterima), dengan
+     * checkpoint per-halaman sehingga aman dilanjutkan kalau terputus.
+     *
+     * @param  bool  $fresh  true = paksa mulai full sync dari awal (abaikan checkpoint tersimpan)
      */
-    public function syncFromAccurate($specificId = null)
+    public function syncFromAccurate($specificId = null, bool $fresh = false): array
     {
         $start = microtime(true);
 
-        $items = $specificId
-            ? array_filter([$this->accurate->getSingleFixedAssetDetail($specificId)])
-            : $this->accurate->getAllFixedAssets();
+        if ($specificId) {
+            $item = $this->accurate->getSingleFixedAssetDetail($specificId);
 
-        if (empty($items)) {
+            if (!$item) {
+                return ['success' => false, 'message' => 'Tidak ada data untuk diproses'];
+            }
+
+            $counters = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0];
+            $this->processSingleItem($item, $counters);
+
+            return [
+                'success'                 => true,
+                'message'                 => 'Sync single item selesai.',
+                'created_assets_count'    => $counters['created'],
+                'updated_assets_count'    => $counters['updated'],
+                'skipped_no_change_count' => $counters['skipped'],
+                'failed_count'            => $counters['failed'],
+                'execution_time'          => round(microtime(true) - $start, 2) . ' seconds',
+            ];
+        }
+
+        $counters = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0];
+
+        $streamResult = $this->accurate->syncAllFixedAssets(
+            function (array $item) use (&$counters) {
+                $this->processSingleItem($item, $counters);
+            },
+            $fresh
+        );
+
+        if ($streamResult['items_fetched'] === 0 && $streamResult['items_failed'] === 0) {
             return ['success' => false, 'message' => 'Tidak ada data untuk diproses'];
         }
 
-        $created = 0;
-        $updated = 0;
-        $skipped = 0;
-        $failed = 0;
-
-        foreach ($items as $item) {
-            $accurateId = $item['id'] ?? null;
-            $accurateNo = $item['number'] ?? null;
-
-            if (!$accurateId || !$this->isAllowedAssetCode($accurateNo)) {
-                continue;
-            }
-
-            // 🔧 Transaction per-item — 1 item gagal tidak lagi rollback item lain yang sudah sukses
-            try {
-                DB::beginTransaction();
-
-                $existings = Asset::where(function ($query) use ($accurateId, $accurateNo) {
-                    $query->where('accurate_fixed_asset_id', $accurateId)
-                        ->orWhere('accurate_item_id', $accurateId);
-
-                    if (!empty($accurateNo)) {
-                        $query->orWhere('accurate_no', $accurateNo);
-                    }
-                })->get();
-
-                if ($existings->isNotEmpty()) {
-                    $result = $this->applyUpdateBatch($existings, $item);
-                    if ($result['skipped'] ?? false) {
-                        $skipped += $existings->count();
-                    } else {
-                        $updated += $existings->count();
-                    }
-                } else {
-                    $this->applyInsert($item);
-                    $created += max(1, (int)($item['quantity'] ?? 1));
-                }
-
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                $failed++;
-                logger()->error('SYNC ITEM ERROR', [
-                    'accurate_id' => $accurateId,
-                    'message'     => $e->getMessage(),
-                    'line'        => $e->getLine(),
-                ]);
-                continue; // lanjut ke item berikutnya, jangan hentikan seluruh proses
-            }
-        }
-
         return [
-            'success' => true,
-            'message' => 'Sync selesai (Upsert Mode + Batch Multi-QTY + Hash Skip).',
-            'created_assets_count'    => $created,
-            'updated_assets_count'    => $updated,
-            'skipped_no_change_count' => $skipped,
-            'failed_count'            => $failed,
+            'success'                 => true,
+            'message'                 => 'Sync selesai (Streaming + Resumable + Batch Multi-QTY + Hash Skip).',
+            'pages_fetched'           => $streamResult['pages_fetched'],
+            'items_fetched_from_api'  => $streamResult['items_fetched'],
+            'items_failed_from_api'   => $streamResult['items_failed'],
+            'created_assets_count'    => $counters['created'],
+            'updated_assets_count'    => $counters['updated'],
+            'skipped_no_change_count' => $counters['skipped'],
+            'failed_count'            => $counters['failed'],
             'execution_time'          => round(microtime(true) - $start, 2) . ' seconds',
         ];
+    }
+
+    /**
+     * Proses 1 item hasil dari Accurate: validasi prefix, cari existing, lalu
+     * insert/update. Dibungkus transaction per-item — 1 item gagal tidak
+     * merusak/rollback item lain yang sudah sukses diproses sebelumnya.
+     *
+     * @param  array  $counters  passed by reference: ['created'=>, 'updated'=>, 'skipped'=>, 'failed'=>]
+     */
+    protected function processSingleItem(array $item, array &$counters): void
+    {
+        $accurateId = $item['id'] ?? null;
+        $accurateNo = $item['number'] ?? null;
+
+        if (!$accurateId || !$this->isAllowedAssetCode($accurateNo)) {
+            return; // bukan error — memang di luar cakupan prefix yang diizinkan
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $existings = Asset::where(function ($query) use ($accurateId, $accurateNo) {
+                $query->where('accurate_fixed_asset_id', $accurateId)
+                    ->orWhere('accurate_item_id', $accurateId);
+
+                if (!empty($accurateNo)) {
+                    $query->orWhere('accurate_no', $accurateNo);
+                }
+            })->get();
+
+            if ($existings->isNotEmpty()) {
+                $result = $this->applyUpdateBatch($existings, $item);
+                if ($result['skipped'] ?? false) {
+                    $counters['skipped'] += $existings->count();
+                } else {
+                    $counters['updated'] += $existings->count();
+                }
+            } else {
+                $this->applyInsert($item);
+                $counters['created'] += max(1, (int) ($item['quantity'] ?? 1));
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $counters['failed']++;
+            logger()->error('SYNC ITEM ERROR', [
+                'accurate_id' => $accurateId,
+                'message'     => $e->getMessage(),
+                'line'        => $e->getLine(),
+            ]);
+        }
     }
 
     /**
@@ -120,7 +159,7 @@ class AssetSyncService
      */
     protected function buildAccurateHash(array $item): string
     {
-        $qty = max(1, (int)($item['quantity'] ?? 1));
+        $qty = max(1, (int) ($item['quantity'] ?? 1));
         $resolvedName = $item['name'] ?? $item['description'] ?? $item['notes'] ?? null;
 
         $signature = [
@@ -164,7 +203,6 @@ class AssetSyncService
             ];
         }
 
-        // 💡 Ambil SELURUH baris aset terkait ID Accurate ini
         $existings = Asset::where(function ($query) use ($accurateId, $accurateNo) {
             $query->where('accurate_fixed_asset_id', $accurateId)
                 ->orWhere('accurate_item_id', $accurateId);
@@ -185,7 +223,6 @@ class AssetSyncService
                 $existing->save();
             }
 
-            // Update massal ke semua pecahan item QTY
             return $this->applyUpdateBatch($existings, $item);
         }
 
@@ -198,13 +235,12 @@ class AssetSyncService
     protected function applyUpdateBatch($existings, array $item): array
     {
         $newHash = $this->buildAccurateHash($item);
-        $qty = max(1, (int)($item['quantity'] ?? 1));
+        $qty = max(1, (int) ($item['quantity'] ?? 1));
 
         $updatedCount = 0;
         $skippedCount = 0;
 
         foreach ($existings as $existing) {
-            // Jika hash tidak berubah, skip update ke DB
             if ($existing->accurate_sync_hash === $newHash) {
                 $skippedCount++;
                 continue;
@@ -212,7 +248,6 @@ class AssetSyncService
 
             $updatedName = $item['name'] ?? $item['description'] ?? $item['notes'] ?? $existing->name;
 
-            // Update field dari Accurate (Location_id aman dari penimpaan)
             $existing->update([
                 'name'                     => $updatedName,
                 'accurate_name'            => $updatedName,
@@ -244,14 +279,14 @@ class AssetSyncService
      */
     protected function applyInsert(array $item): array
     {
-        $qty     = max(1, (int)($item['quantity'] ?? 1));
+        $qty     = max(1, (int) ($item['quantity'] ?? 1));
         $newHash = $this->buildAccurateHash($item);
 
         for ($i = 0; $i < $qty; $i++) {
             Asset::create([
                 'asset_number'             => $this->generateAssetNumber(),
                 'name'                     => $item['name'] ?? 'Unknown Asset',
-                'location_id'              => null, // Menjaga null secara eksplisit untuk pengisian manual via AssetKu
+                'location_id'              => null,
                 'purchase_date'            => $this->parseDate($item['purchaseDate'] ?? null),
                 'quantity'                 => 1,
                 'purchase_price'           => round(($item['assetCost'] ?? 0) / $qty, 2),
