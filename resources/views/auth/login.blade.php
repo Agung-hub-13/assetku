@@ -64,7 +64,7 @@
                                 <span class="text-[9px] text-slate-400 font-medium">PT Sentral Layanan Prima</span>
                             </div>
                         </div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Selamat Datang</h2>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Selamat Datang di SLP</h2>
                         <p class="text-xs sm:text-sm text-slate-400 font-medium">Silakan akses akun korporat terverifikasi Anda.</p>
                     </div>
 
