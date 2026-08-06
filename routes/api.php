@@ -1,0 +1,11 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AssetSyncController;
+use App\Http\Controllers\AccurateTokenController;
+use App\Http\Controllers\AccurateWebhookController;
+
+Route::get('/test-accurate', [AccurateTokenController::class, 'testAccurate']);
+Route::get('/test-detail', [AccurateTokenController::class, 'testDetail']);
+Route::post('/accurate/sync-assets', [AssetSyncController::class, 'sync']);
+Route::post('/accurate/webhook', [AccurateWebhookController::class, 'handle']);
