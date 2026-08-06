@@ -24,20 +24,7 @@ class AssetSyncService
      */
     protected function isAllowedAssetCode(?string $accurateNo): bool
     {
-        if (!$accurateNo) {
-            return false;
-        }
-
-        $allowedPrefixes = ['FAA', '9200', 'AST'];
-        $upperNo = strtoupper($accurateNo);
-
-        foreach ($allowedPrefixes as $prefix) {
-            if (Str::startsWith($upperNo, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return !empty($accurateNo);
     }
 
     /**
@@ -114,8 +101,8 @@ class AssetSyncService
         $accurateId = $item['id'] ?? null;
         $accurateNo = $item['number'] ?? null;
 
-        if (!$accurateId || !$this->isAllowedAssetCode($accurateNo)) {
-            return; // bukan error — memang di luar cakupan prefix yang diizinkan
+        if (!$accurateId) {
+            return;
         }
 
         try {

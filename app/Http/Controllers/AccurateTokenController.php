@@ -220,11 +220,9 @@ class AccurateTokenController extends Controller
 
         // 3. JALANKAN SYNC OTOMATIS SAAT KONEKSI PERTAMA BERHASIL
         // Jalankan sinkronisasi aset bawaan Anda
-        app(\App\Services\AssetSyncService::class)->syncFromAccurate();
-
         return redirect()
             ->route('admin.accurate_tokens.index')
-            ->with('success', 'Accurate berhasil connect, data Aset dan Lokasi berhasil disinkronkan.');
+            ->with('success', 'Accurate berhasil connect. Token tersimpan — jalankan sync data via CLI (php artisan accurate:sync-asset).');
     }
 
     /*
