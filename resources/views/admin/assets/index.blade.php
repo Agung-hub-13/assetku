@@ -189,12 +189,13 @@
                 <tbody class="text-sm text-slate-700 dark:text-slate-200 divide-y divide-slate-100 dark:divide-slate-700/30">
                     @forelse($assets as $asset)
                     @php
-                    // SESUAIKAN MENJADI SEPERTI INI
                     $activeLocation = $asset->transfer->toLocation ?? $asset->location;
 
-                    $qrPayload = "AST:" . ($asset->asset_code ?? '-') . "\n" .
-                    "NM:" . $asset->name . "\n" .
-                    "LOC:" . ($activeLocation->name ?? '-');
+                    $qrPayload = "KODE: " . ($asset->asset_code ?? '-') . "\n" .
+                                 "NAMA: " . $asset->name . "\n" .
+                                 "SN: " . ($asset->serial_number ?: '-') . "\n" .
+                                 "ACCURATE: " . ($asset->accurate_no ?? '-') . "\n" .
+                                 "LOKASI: " . ($activeLocation->name ?? '-');
                     @endphp
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors align-middle">
                         <td class="px-4 py-4 text-center">
@@ -254,24 +255,23 @@
                         <td class="px-6 py-4 text-center">
                             @php
                             $detailPayload = [
-                            "id" => $asset->id,
-                            "name" => $asset->name,
-                            "asset_code" => $asset->asset_code ?? "-",
-                            "accurate_no" => $asset->accurate_no ?? "-",
-                            "serial_number" => $asset->serial_number ?? "-",
-                            "description" => $asset->description ?? "-",
-                            "quantity" => $asset->quantity ?? 1,
-                            "purchase_price" => number_format($asset->purchase_price ?? 0, 0, ",", "."),
-                            "book_value" => number_format($asset->book_value ?? 0, 0, ",", "."),
-                            "category" => $asset->category->name ?? $asset->accurate_category_name ?? "-",
-                            "department" => $asset->department->name ?? "-",
-                            "status" => strtoupper($asset->status ?? "-"),
-                            "location" => $activeLocation->name ?? "-",
-                            "building" => $activeLocation->building ?? "-",
-                            "floor" => $activeLocation->floor ?? "-",
-                            "room" => $activeLocation->room ?? "-",
-                            "qr_payload" => $qrPayload,
-                            "print_url" => route("admin.assets.print-qrcode", $asset->id)
+                                "id" => $asset->id,
+                                "name" => $asset->name,
+                                "asset_code" => $asset->asset_code ?? "-",
+                                "accurate_no" => $asset->accurate_no ?? "-",
+                                "serial_number" => $asset->serial_number ?? "-",
+                                "description" => $asset->description ?? "-",
+                                "quantity" => $asset->quantity ?? 1,
+                                "purchase_price" => number_format($asset->purchase_price ?? 0, 0, ",", "."),
+                                "book_value" => number_format($asset->book_value ?? 0, 0, ",", "."),
+                                "category" => $asset->category->name ?? $asset->accurate_category_name ?? "-",
+                                "department" => $asset->department->name ?? "-",
+                                "status" => strtoupper($asset->status ?? "-"),
+                                "location" => $activeLocation->name ?? "-",
+                                "building" => $activeLocation->building ?? "-",
+                                "floor" => $activeLocation->floor ?? "-",
+                                "room" => $activeLocation->room ?? "-",
+                                "print_url" => route("admin.assets.print-qrcode", $asset->id)
                             ];
                             @endphp
 
@@ -334,81 +334,120 @@
     <div id="filtered-assets-data" data-ids="{{ implode(',', $assets->pluck('id')->toArray()) }}"></div>
 </div>
 
-<!-- 🔍 MODAL DETAIL ASET -->
+<!-- 🔍 MODAL DETAIL ASET (Tampilan Lebih Rapi & Terstruktur) -->
 <div id="modalDetailAsset" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="relative w-full max-w-2xl bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-700/50 overflow-hidden transform transition-all">
-        <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50">
+    <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transform transition-all">
+        
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
             <div>
-                <span class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Detail Informasi Aset</span>
-                <h3 id="m-name" class="text-xl font-black text-slate-800 dark:text-white leading-tight">-[Nama Aset]-</h3>
+                <span class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Rincian Detail Aset</span>
+                <h3 id="m-name" class="text-xl font-black text-slate-800 dark:text-white leading-tight mt-0.5">-[Nama Aset]-</h3>
             </div>
-            <button onclick="closeDetailModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+            <button onclick="closeDetailModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 ✕
             </button>
         </div>
 
+        <!-- Modal Body -->
         <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-            <div class="flex flex-col sm:flex-row gap-6 items-center bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-                <div id="m-qr-container" class="p-2 bg-white rounded-xl shadow-sm border border-slate-200 shrink-0"></div>
-                <div class="space-y-2 flex-1 text-center sm:text-left w-full">
-                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <span id="m-status" class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 uppercase">ACTIVE</span>
-                        <span id="m-category" class="px-2.5 py-0.5 text-[10px] font-bold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300 uppercase">KATEGORI</span>
-                        <span id="m-department" class="px-2.5 py-0.5 text-[10px] font-bold rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 uppercase">DEPARTEMEN</span>
+            
+            <!-- Top Badges & Quick Info Card -->
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="space-y-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="m-status" class="px-3 py-1 text-[10px] font-extrabold rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 uppercase">ACTIVE</span>
+                        <span id="m-category" class="px-3 py-1 text-[10px] font-bold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 uppercase">KATEGORI</span>
+                        <span id="m-department" class="px-3 py-1 text-[10px] font-bold rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 uppercase">DEPARTEMEN</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs pt-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs pt-1">
                         <div>
-                            <span class="text-slate-400 block">Asset Code</span>
-                            <span id="m-code" class="font-bold font-mono text-slate-700 dark:text-slate-200">-</span>
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Asset Code</span>
+                            <span id="m-code" class="font-bold font-mono text-slate-700 dark:text-slate-200 text-sm">-</span>
                         </div>
                         <div>
-                            <span class="text-slate-400 block">Accurate No</span>
-                            <span id="m-accurate" class="font-bold font-mono text-slate-700 dark:text-slate-200">-</span>
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Accurate No</span>
+                            <span id="m-accurate" class="font-bold font-mono text-slate-700 dark:text-slate-200 text-sm">-</span>
                         </div>
                     </div>
-                    <div class="pt-2 flex items-center gap-2 justify-center sm:justify-start">
-                        <a id="m-print-btn" href="#" target="_blank" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm">
-                            🖨️ Cetak QR
-                        </a>
-                    </div>
+                </div>
+
+                <!-- Tombol Cetak Langsung ke print-qrcode.blade.php -->
+                <div>
+                    <a id="m-print-btn" href="#" target="_blank" class="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-95 whitespace-nowrap">
+                        🖨️ Cetak Label QR
+                    </a>
                 </div>
             </div>
 
+            <!-- Grid Detail Informasi Lengkap -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div class="p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800 space-y-2">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Informasi Spesifikasi & Keuangan</span>
-                    <div>
-                        <span class="text-slate-400">Serial Number:</span>
-                        <p id="m-serial" class="font-semibold text-slate-700 dark:text-slate-200">-</p>
+                
+                <!-- Spesifikasi & Finansial -->
+                <div class="p-5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/30 space-y-3">
+                    <h4 class="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-2">Spesifikasi & Keuangan</h4>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Serial Number</span>
+                            <span id="m-serial" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Jumlah (Qty)</span>
+                            <span id="m-qty" class="font-semibold text-slate-700 dark:text-slate-200">1</span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="text-slate-400">Harga Beli / Nilai Buku:</span>
-                        <p class="font-semibold text-slate-700 dark:text-slate-200">
-                            Rp <span id="m-price">0</span> / Rp <span id="m-bookvalue">0</span>
-                        </p>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Harga Beli</span>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200">Rp <span id="m-price">0</span></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Nilai Buku</span>
+                            <span class="font-semibold text-slate-700 dark:text-slate-200">Rp <span id="m-bookvalue">0</span></span>
+                        </div>
                     </div>
+
                     <div>
-                        <span class="text-slate-400">Deskripsi:</span>
-                        <p id="m-desc" class="text-slate-600 dark:text-slate-300 leading-relaxed">-</p>
+                        <span class="text-slate-400 block text-[10px] uppercase mb-0.5">Deskripsi / Keterangan</span>
+                        <p id="m-desc" class="text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl">-</p>
                     </div>
                 </div>
 
-                <div class="p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 bg-white dark:bg-slate-800 space-y-2">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Lokasi & Penempatan</span>
+                <!-- Informasi Lokasi -->
+                <div class="p-5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/30 space-y-3">
+                    <h4 class="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-2">Lokasi & Penempatan</h4>
+                    
                     <div>
-                        <span class="text-slate-400">Lokasi / Ruangan:</span>
-                        <p id="m-location" class="font-bold text-slate-800 dark:text-slate-100">-</p>
+                        <span class="text-slate-400 block text-[10px] uppercase">Lokasi Utama / Ruangan</span>
+                        <p id="m-location" class="font-bold text-slate-800 dark:text-slate-100 text-sm mt-0.5">-</p>
                     </div>
-                    <div>
-                        <span class="text-slate-400">Gedung / Lantai / Ruang:</span>
-                        <p id="m-sublocation" class="font-medium text-slate-600 dark:text-slate-300">-</p>
+
+                    <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl space-y-2">
+                        <div>
+                            <span class="text-slate-400 text-[10px] uppercase block">Gedung</span>
+                            <span id="m-building" class="font-medium text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/50 dark:border-slate-800">
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase block">Lantai</span>
+                                <span id="m-floor" class="font-medium text-slate-700 dark:text-slate-200">-</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase block">Ruang</span>
+                                <span id="m-room" class="font-medium text-slate-700 dark:text-slate-200">-</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <div class="p-4 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
-            <button onclick="closeDetailModal()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 font-bold text-xs rounded-xl transition-all">
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
+            <button onclick="closeDetailModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all">
                 Tutup
             </button>
         </div>
@@ -633,15 +672,13 @@
     </div>
 </div>
 
-<!-- Easy QR Generator Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
 <script>
     function openDetailModal(data) {
         document.getElementById('m-name').innerText = data.name;
         document.getElementById('m-code').innerText = data.asset_code;
         document.getElementById('m-accurate').innerText = data.accurate_no;
         document.getElementById('m-serial').innerText = data.serial_number;
+        document.getElementById('m-qty').innerText = data.quantity;
         document.getElementById('m-price').innerText = data.purchase_price;
         document.getElementById('m-bookvalue').innerText = data.book_value;
         document.getElementById('m-desc').innerText = data.description;
@@ -650,17 +687,12 @@
         document.getElementById('m-status').innerText = data.status;
 
         document.getElementById('m-location').innerText = data.location;
-        document.getElementById('m-sublocation').innerText = `Gedung: ${data.building} | Lt: ${data.floor} | Ruang: ${data.room}`;
+        document.getElementById('m-building').innerText = data.building && data.building !== '-' ? data.building : '-';
+        document.getElementById('m-floor').innerText = data.floor && data.floor !== '-' ? data.floor : '-';
+        document.getElementById('m-room').innerText = data.room && data.room !== '-' ? data.room : '-';
 
+        // Mengarahkan tombol cetak langsung ke halaman cetak QR code (print-qrcode.blade.php)
         document.getElementById('m-print-btn').href = data.print_url;
-
-        const qrContainer = document.getElementById('m-qr-container');
-        qrContainer.innerHTML = '';
-        new QRCode(qrContainer, {
-            text: data.qr_payload,
-            width: 110,
-            height: 110
-        });
 
         document.getElementById('modalDetailAsset').classList.remove('hidden');
     }
@@ -772,7 +804,6 @@
         title.innerText = 'Edit Detail Aset';
         form.action = `/admin/assets/${data.id}`;
 
-        // Gunakan HTML hidden input untuk method PUT
         method.innerHTML = '<input type="hidden" name="_method" value="PUT">';
 
         document.getElementById('a_number').value = data.asset_number ?? '';
@@ -784,14 +815,9 @@
         document.getElementById('a_status').value = data.status ?? 'draft';
         document.getElementById('a_category').value = data.category_id ?? '';
         document.getElementById('a_user').value = data.user_id ?? '';
-
-        // PASTIKAN department_id terpetakan dengan benar
         document.getElementById('a_department').value = data.department_id ?? '';
-
         document.getElementById('a_location').value = data.location_id ?? '';
         document.getElementById('a_description').value = data.description ?? '';
-
-        // PASTIKAN purchase_date terpetakan dengan format YYYY-MM-DD
         document.getElementById('a_purchase_date').value = data.purchase_date ? data.purchase_date.substring(0, 10) : '';
 
         crudModal.classList.remove('hidden');
