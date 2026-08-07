@@ -28,14 +28,14 @@ class AssetTransferController extends Controller
         try {
             // 1. Inisialisasi query dengan eager loading lengkap sesuai relasi model
             $query = AssetTransfer::with([
-                'asset', 
-                'fromLocation', 
-                'toLocation', 
-                'fromDepartment', 
-                'toDepartment', 
-                'fromUser', 
-                'toUser', 
-                'creator', 
+                'asset',
+                'fromLocation',
+                'toLocation',
+                'fromDepartment',
+                'toDepartment',
+                'fromUser',
+                'toUser',
+                'creator',
                 'approver'
             ]);
 
@@ -93,11 +93,11 @@ class AssetTransferController extends Controller
             // 3. Ambil data dengan Pagination
             $transfers = $query->latest()->paginate(50)->appends($request->all());
 
-            // Master data untuk dropdown form/filter
-            $assets     = Asset::orderBy('name')->get();
+            // Batasi master data agar tidak membebani RAM (Memory Limit Exhausted)
+            $assets     = Asset::orderBy('name')->limit(100)->get();
             $locations  = AssetLocation::orderBy('name')->get();
             $departments = Department::orderBy('name')->get();
-            $users      = User::orderBy('name')->get();
+            $users      = User::orderBy('name')->limit(100)->get();
 
             if ($request->routeIs('mobile.*')) {
                 return view('mobile.asset_transfers.index', compact('transfers', 'assets', 'locations', 'departments', 'users'));
@@ -113,6 +113,7 @@ class AssetTransferController extends Controller
             return back()->with('error', 'Gagal memuat data mutasi: ' . $e->getMessage());
         }
     }
+
 
     public function store(Request $request)
     {

@@ -38,15 +38,16 @@ class AssetLoanController extends Controller
             $loans = $query->paginate(10);
             $locations = AssetLocation::where('status', 'active')->get();
 
-            $assets = Asset::whereRaw('LOWER(status) = ?', ['available'])->get();
+            // BATASI pengambilan aset agar tidak meload belasan ribu data sekaligus ke RAM
+            $assets = Asset::whereRaw('LOWER(status) = ?', ['available'])->limit(100)->get();
 
             if ($assets->isEmpty()) {
-                Log::warning('[AssetLoanController@index] Tidak ada aset dengan status available. Mengambil seluruh daftar aset.');
-                $assets = Asset::all();
+                Log::warning('[AssetLoanController@index] Tidak ada aset dengan status available. Mengambil sebagian daftar aset.');
+                $assets = Asset::limit(100)->get();
             }
 
-            // Tambahan data dropdown user, department, dan location untuk kebutuhan filter/index form blade
-            $users = User::all();
+            // Batasi juga user jika jumlahnya banyak, atau biarkan jika tabel user masih sedikit
+            $users = User::limit(100)->get();
             $departments = class_exists(\App\Models\Department::class) ? \App\Models\Department::all() : collect();
 
             return view('admin.asset_loans.index', compact('loans', 'locations', 'assets', 'users', 'departments'));
@@ -70,7 +71,7 @@ class AssetLoanController extends Controller
 
         $assets      = Asset::whereRaw('LOWER(status) = ?', ['available'])->get();
         $locations   = AssetLocation::where('status', 'active')->get();
-        
+
         // Pemanggilan data tambahan untuk user_id, department_id, dan location_id ke form blade
         $users       = User::all();
         $departments = class_exists(\App\Models\Department::class) ? \App\Models\Department::all() : collect();
@@ -91,7 +92,7 @@ class AssetLoanController extends Controller
         $validated = $request->validate([
             'user_id'              => ['nullable', 'exists:users,id'],
             'department_id'        => ['nullable', 'exists:departments,id'],
-            'location_id'          => ['required', 'exists:asset_locations,id'], 
+            'location_id'          => ['required', 'exists:asset_locations,id'],
             'asset_id'             => ['required', 'exists:assets,id'],
             'request_date'         => ['required', 'date'],
             'start_date'           => ['required', 'date'],
@@ -137,8 +138,8 @@ class AssetLoanController extends Controller
             $loan = AssetLoan::create([
                 'loan_number'          => $loanNumber,
                 'user_id'              => $userId,
-                'department_id'        => $departmentId, 
-                'location_id'          => $validated['location_id'], 
+                'department_id'        => $departmentId,
+                'location_id'          => $validated['location_id'],
                 'asset_id'             => $validated['asset_id'],
                 'request_date'         => $validated['request_date'],
                 'start_date'           => $validated['start_date'],
@@ -509,7 +510,7 @@ class AssetLoanController extends Controller
         $validated = $request->validate([
             'user_id'              => ['nullable', 'exists:users,id'],
             'department_id'        => ['nullable', 'exists:departments,id'],
-            'location_id'          => ['required', 'exists:asset_locations,id'], 
+            'location_id'          => ['required', 'exists:asset_locations,id'],
             'asset_id'             => ['required', 'exists:assets,id'],
             'start_date'           => ['required', 'date'],
             'expected_return_date' => ['required', 'date', 'after_or_equal:start_date'],
