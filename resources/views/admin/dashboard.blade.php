@@ -34,7 +34,7 @@
                     <span class="h-6 w-1.5 bg-blue-600 rounded-full inline-block"></span>
                     Asset Management Command Center
                 </h1>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitoring real-time aset, alokasi area, visualisasi investasi, dan depresiasi.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitoring real-time kuantitas aset, alokasi area, dan status operasional unit.</p>
             </div>
         </div>
 
@@ -81,8 +81,8 @@
             </button>
         </div>
 
-        {{-- Kumpulan KPI Cards Modern --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {{-- Kumpulan KPI Cards Modern (3 Kolom Fokus Kuantitas & Operasional) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             {{-- CARD 1: Total Aset --}}
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
                 <div>
@@ -98,22 +98,7 @@
                 </div>
             </div>
 
-            {{-- CARD 2: Total Investasi --}}
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
-                <div>
-                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Nilai Investasi</p>
-                    <h3 id="total-asset-value" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-2.5 tracking-tight">
-                        Rp {{ number_format($totalInvestmentValue ?? 0, 0, ',', '.') }}
-                    </h3>
-                </div>
-                <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-2xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-            </div>
-
-            {{-- CARD 3: Total Lokasi --}}
+            {{-- CARD 2: Total Lokasi / Sebaran Area --}}
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sebaran Area</p>
@@ -129,10 +114,10 @@
                 </div>
             </div>
 
-            {{-- CARD 4: Aset Nilai Buku Habis --}}
+            {{-- CARD 3: Aset Perlu Perhatian / Maintenance / Depresiasi Habis --}}
             <a href="/admin/assets?depreciated=1" class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:border-red-300 dark:hover:border-red-900/60 hover:shadow-md group">
                 <div>
-                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">Buku Habis / Rp 0</p>
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">Perlu Perhatian / Nilai Buku Habis</p>
                     <h3 id="total-depreciated-count" class="text-3xl font-black text-red-600 dark:text-red-500 mt-2">
                         {{ $totalBookValueHabis ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Asset</span>
                     </h3>
@@ -146,7 +131,7 @@
         </div>
 
         {{-- Charts Section --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {{-- Doughnut Chart Lokasi --}}
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm transition-colors duration-300">
                 <div class="mb-4">
@@ -161,13 +146,13 @@
                 </div>
             </div>
 
-            {{-- Bar Chart Departemen --}}
-            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm lg:col-span-2 transition-colors duration-300">
+            {{-- Bar Chart Departemen (Volume Unit) --}}
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm transition-colors duration-300">
                 <div class="mb-4">
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Kekuatan Finansial Per Departemen</h4>
-                    <p class="text-xs text-slate-400 dark:text-slate-500">Akumulasi nominal nilai investasi aset (Accurate Data).</p>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Volume Aset Per Departemen</h4>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">Jumlah total unit kepemilikan berdasarkan departemen.</p>
                 </div>
-                <div class="relative h-64 w-full">
+                <div class="relative h-64 w-full flex items-center justify-center">
                     <canvas id="chartDepartemen"
                         data-labels="{{ json_encode($chartDeptData['labels'] ?? []) }}"
                         data-values="{{ json_encode($chartDeptData['values'] ?? []) }}">
@@ -251,7 +236,7 @@
             }
         }
 
-        // 2. Bar Chart Departemen
+        // 2. Bar Chart Departemen (Volume Unit)
         if (canvasDept) {
             if (chartDepartemenInstance) {
                 chartDepartemenInstance.data.labels = deptLabels;
@@ -266,7 +251,7 @@
                     data: {
                         labels: deptLabels,
                         datasets: [{
-                            label: 'Investasi',
+                            label: 'Jumlah Unit',
                             data: deptValues,
                             backgroundColor: '#6366f1',
                             hoverBackgroundColor: '#4f46e5',
@@ -304,11 +289,7 @@
                                     font: {
                                         size: 10
                                     },
-                                    callback: function(value) {
-                                        if (value >= 1e9) return 'Rp ' + (value / 1e9).toFixed(1) + 'B';
-                                        if (value >= 1e6) return 'Rp ' + (value / 1e6).toFixed(0) + 'M';
-                                        return 'Rp ' + value.toLocaleString('id-ID');
-                                    }
+                                    precision: 0
                                 }
                             }
                         }
@@ -342,7 +323,6 @@
 
                 // Update KPI Cards
                 document.getElementById('total-asset-count').innerHTML = `${formatNumber(data.kpi.total_count)} <span class="text-xs font-normal text-slate-400">Unit</span>`;
-                document.getElementById('total-asset-value').innerText = data.kpi.total_value;
                 document.getElementById('total-location-count').innerHTML = `${formatNumber(data.kpi.total_location)} <span class="text-xs font-normal text-slate-400">Lokasi</span>`;
 
                 if (data.kpi.total_book_value_habis !== undefined) {

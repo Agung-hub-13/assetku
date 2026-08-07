@@ -638,52 +638,32 @@
 
 <script>
     function openDetailModal(data) {
-    const setSafeText = (id, text) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = text;
-    };
+        document.getElementById('m-name').innerText = data.name;
+        document.getElementById('m-code').innerText = data.asset_code;
+        document.getElementById('m-accurate').innerText = data.accurate_no;
+        document.getElementById('m-serial').innerText = data.serial_number;
+        document.getElementById('m-price').innerText = data.purchase_price;
+        document.getElementById('m-bookvalue').innerText = data.book_value;
+        document.getElementById('m-desc').innerText = data.description;
+        document.getElementById('m-category').innerText = data.category;
+        document.getElementById('m-department').innerText = data.department;
+        document.getElementById('m-status').innerText = data.status;
 
-    setSafeText('m-name', data.name ?? '-');
-    setSafeText('m-code', data.asset_code ?? '-');
-    setSafeText('m-accurate', data.accurate_no ?? '-');
-    setSafeText('m-serial', data.serial_number ?? '-');
-    
-    setSafeText('m-price', data.purchase_price ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data.purchase_price) : 'Rp 0');
-    setSafeText('m-bookvalue', data.book_value ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data.book_value) : 'Rp 0');
-    
-    setSafeText('m-purchase-date', data.purchase_date ?? '-');
-    setSafeText('m-estimated-life', data.estimated_life ? `${data.estimated_life} Tahun` : '-');
-    setSafeText('m-quantity', data.quantity ?? 1);
+        document.getElementById('m-location').innerText = data.location;
+        document.getElementById('m-sublocation').innerText = `Gedung: ${data.building} | Lt: ${data.floor} | Ruang: ${data.room}`;
 
-    setSafeText('m-desc', data.description ?? '-');
-    setSafeText('m-category', data.category ?? '-');
-    setSafeText('m-department', data.department ?? '-');
-    setSafeText('m-status', data.status ?? '-');
-    setSafeText('m-location', data.location ?? '-');
-    
-    const subLocationEl = document.getElementById('m-sublocation');
-    if (subLocationEl) {
-        subLocationEl.innerText = `Gedung: ${data.building ?? '-'} | Lt: ${data.floor ?? '-'} | Ruang: ${data.room ?? '-'}`;
-    }
+        document.getElementById('m-print-btn').href = data.print_url;
 
-    const printBtn = document.getElementById('m-print-btn');
-    if (printBtn) printBtn.href = data.print_url ?? '#';
-
-    const qrContainer = document.getElementById('m-qr-container');
-    if (qrContainer) {
+        const qrContainer = document.getElementById('m-qr-container');
         qrContainer.innerHTML = '';
-        if (data.qr_payload && typeof QRCode !== 'undefined') {
-            new QRCode(qrContainer, {
-                text: data.qr_payload,
-                width: 110,
-                height: 110
-            });
-        }
-    }
+        new QRCode(qrContainer, {
+            text: data.qr_payload,
+            width: 110,
+            height: 110
+        });
 
-    const modal = document.getElementById('modalDetailAsset');
-    if (modal) modal.classList.remove('hidden');
-}
+        document.getElementById('modalDetailAsset').classList.remove('hidden');
+    }
 
     function closeDetailModal() {
         document.getElementById('modalDetailAsset').classList.add('hidden');

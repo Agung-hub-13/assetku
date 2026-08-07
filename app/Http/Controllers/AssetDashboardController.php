@@ -34,10 +34,9 @@ class AssetDashboardController extends Controller
             ]);
         }
 
-        // 1. Ambil data KPI Utama
+        // 1. Ambil data KPI Utama (Tanpa Nominal Harga)
         $locations = AssetLocation::all();
         $totalAssetCount = Asset::count();
-        $totalInvestmentValue = Asset::sum('total_price');
         $totalBookValueHabis = Asset::where('book_value', 0)->count();
 
         // 2. Data Grafik Chart Lokasi (Kuantitas Aset)
@@ -53,8 +52,8 @@ class AssetDashboardController extends Controller
             'values' => $rawLokasiData->pluck('total')->toArray(),
         ];
 
-        // 3. Data Grafik Chart Departemen (Join langsung ke tabel departments dari assets)
-        $rawDepartemenData = Asset::select('departments.name as dept_name', DB::raw('sum(assets.total_price) as total_nilai'))
+        // 3. Data Grafik Chart Departemen (Kuantitas Unit per Departemen)
+        $rawDepartemenData = Asset::select('departments.name as dept_name', DB::raw('count(assets.id) as total_unit'))
             ->leftJoin('departments', 'assets.department_id', '=', 'departments.id')
             ->groupBy('departments.id', 'departments.name')
             ->get();
@@ -63,7 +62,7 @@ class AssetDashboardController extends Controller
             'labels' => $rawDepartemenData->map(function($item) {
                 return $item->dept_name ?? 'Tanpa Departemen';
             })->toArray(),
-            'values' => $rawDepartemenData->pluck('total_nilai')->toArray(),
+            'values' => $rawDepartemenData->pluck('total_unit')->toArray(),
         ];
 
         $filterLokasi = AssetLocation::select('id', 'name')->whereNotNull('name')->orderBy('name', 'asc')->get();
@@ -72,7 +71,6 @@ class AssetDashboardController extends Controller
         return view('admin.dashboard', compact(
             'locations',
             'totalAssetCount',
-            'totalInvestmentValue',
             'totalBookValueHabis',
             'chartLokasiData',
             'chartDeptData',
@@ -102,9 +100,8 @@ class AssetDashboardController extends Controller
             $baseQuery->where('assets.status', $request->status);
         }
 
-        // 3. Hitung KPI dari query yang sudah difilter
+        // 3. Hitung KPI dari query yang sudah difilter (Tanpa nominal harga)
         $totalCount = (clone $baseQuery)->count('assets.id');
-        $totalValue = (clone $baseQuery)->sum('assets.total_price');
         $totalBookValueHabis = (clone $baseQuery)->where('assets.book_value', 0)->count();
 
         $totalLocation = $request->filled('lokasi') ? 1 : AssetLocation::count();
@@ -120,22 +117,21 @@ class AssetDashboardController extends Controller
         })->toArray();
         $chartLokasiValues = $lokasiData->pluck('total')->toArray();
 
-        // 5. Query Grafik 2: Finansial Total Nilai per Departemen
+        // 5. Query Grafik 2: Kuantitas Unit per Departemen
         $departemenData = (clone $baseQuery)
-            ->select('departments.name as dept_name', DB::raw('SUM(assets.total_price) as total_nilai'))
+            ->select('departments.name as dept_name', DB::raw('count(assets.id) as total_unit'))
             ->groupBy('departments.id', 'departments.name')
             ->get();
 
         $chartDeptLabels = $departemenData->map(function($item) {
             return $item->dept_name ?? 'Tanpa Departemen';
         })->toArray();
-        $chartDeptValues = $departemenData->pluck('total_nilai')->toArray();
+        $chartDeptValues = $departemenData->pluck('total_unit')->toArray();
 
-        // Response JSON
+        // Response JSON (Tanpa atribut total_value yang mengandung nominal rupiah)
         return response()->json([
             'kpi' => [
                 'total_count'            => $totalCount,
-                'total_value'            => 'Rp ' . number_format($totalValue, 0, ',', '.'),
                 'total_location'         => $totalLocation,
                 'total_book_value_habis' => $totalBookValueHabis
             ],
