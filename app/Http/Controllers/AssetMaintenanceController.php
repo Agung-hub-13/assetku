@@ -40,7 +40,8 @@ class AssetMaintenanceController extends Controller
 
         $maintenances = $query->latest()->paginate(10)->withQueryString();
 
-        $assets = Asset::orderBy('name')->get();
+        // BATASI agar tidak meload 15 ribu data sekaligus yang membuat RAM habis
+        $assets = Asset::orderBy('name')->limit(50)->get();
         $technicians = User::orderBy('name')->get();
 
         return view('admin.asset_maintenances.index', compact('maintenances', 'assets', 'technicians'));
