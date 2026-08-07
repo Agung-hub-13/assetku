@@ -25,7 +25,7 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <form action="{{ route('admin.assets.sync-all') }}" method="POST" style="display: none;">
+            <form action="{{ route('admin.assets.sync-all') }}" method="POST">
                 @csrf
                 <button id="btnSyncSingle" type="submit">🔄 Sync Semua Data dari Accurate</button>
             </form>
@@ -90,71 +90,73 @@
 
     <!-- FILTER & PENCARIAN -->
     <form action="{{ request()->url() }}" method="GET" class="relative z-10 bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm mb-6 transition-all">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
-        
-        <!-- Cari Aset -->
-        <div class="lg:col-span-3 space-y-1.5">
-            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Cari Aset</label>
-            <div class="relative">
-                <input type="text" name="search" value="{{ request('search') }}"
-                    class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none"
-                    placeholder="Nama aset, kode, serial...">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+
+            <!-- Cari Aset -->
+            <div class="lg:col-span-3 space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Cari Aset</label>
+                <div class="relative">
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none"
+                        placeholder="Nama aset, kode, serial...">
+                </div>
             </div>
-        </div>
 
-        <!-- Kategori -->
-        <div class="lg:col-span-2 space-y-1.5">
-            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
-            <select name="category_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
-                <option value="">Semua Kategori</option>
-                @foreach($categories ?? [] as $category)
-                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                    {{ strtoupper($category->name) }}
-                </option>
-                @endforeach
-            </select>
-        </div>
+            <!-- Kategori -->
+            <div class="lg:col-span-2 space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
+                <select name="category_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories ?? [] as $category)
+                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                        {{ strtoupper($category->name) }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
 
-        <!-- Lokasi -->
-        <div class="lg:col-span-2 space-y-1.5">
-            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Lokasi</label>
-            <select name="room_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
-                <option value="">Semua Lokasi</option>
-                @foreach($locations ?? [] as $loc)
-                <option value="{{ $loc->id }}" {{ request('room_id') == $loc->id ? 'selected' : '' }}>
-                    {{ $loc->name }} {{ $loc->parent ? '('.$loc->parent->name.')' : '' }}
-                </option>
-                @endforeach
-            </select>
-        </div>
+            <!-- Lokasi -->
+            <div class="lg:col-span-2 space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Lokasi</label>
+                <select name="room_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                    <option value="">Semua Lokasi</option>
+                    @foreach($locations ?? [] as $loc)
+                    <option value="{{ $loc->id }}" {{ request('room_id') == $loc->id ? 'selected' : '' }}>
+                        {{ $loc->name }} {{ $loc->parent ? '('.$loc->parent->name.')' : '' }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
 
-        <!-- Status -->
-        <div class="lg:col-span-2 space-y-1.5">
-            <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
-            <select name="status" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
-                <option value="">Semua Status</option>
-                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-            </select>
-        </div>
+            <!-- Status -->
+            <div class="lg:col-span-2 space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Status</label>
+                <select name="status" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                    <option value="">Semua Status</option>
+                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                    <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                </select>
+            </div>
 
-        <!-- Tombol Aksi (Filter & Reset) -->
-        <div class="lg:col-span-3 flex items-center gap-2">
-            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm hover:shadow-blue-500/20 active:scale-95 text-center flex items-center justify-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                Filter
-            </button>
-            
-            @if(request()->anyFilled(['search', 'category_id', 'room_id', 'status']))
-            <a href="{{ request()->url() }}" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-95 text-center flex items-center justify-center">
-                Reset
-            </a>
-            @endif
-        </div>
+            <!-- Tombol Aksi (Filter & Reset) -->
+            <div class="lg:col-span-3 flex items-center gap-2">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm hover:shadow-blue-500/20 active:scale-95 text-center flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    Filter
+                </button>
 
-    </div>
-</form>
+                @if(request()->anyFilled(['search', 'category_id', 'room_id', 'status']))
+                <a href="{{ request()->url() }}" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-95 text-center flex items-center justify-center">
+                    Reset
+                </a>
+                @endif
+            </div>
+
+        </div>
+    </form>
 
     <!-- TOMBOL AKSI CETAK QR MASSAL -->
     <div class="relative z-10 flex flex-wrap gap-2 mb-4">
@@ -192,10 +194,10 @@
                     $activeLocation = $asset->transfer->toLocation ?? $asset->location;
 
                     $qrPayload = "KODE: " . ($asset->asset_code ?? '-') . "\n" .
-                                 "NAMA: " . $asset->name . "\n" .
-                                 "SN: " . ($asset->serial_number ?: '-') . "\n" .
-                                 "ACCURATE: " . ($asset->accurate_no ?? '-') . "\n" .
-                                 "LOKASI: " . ($activeLocation->name ?? '-');
+                    "NAMA: " . $asset->name . "\n" .
+                    "SN: " . ($asset->serial_number ?: '-') . "\n" .
+                    "ACCURATE: " . ($asset->accurate_no ?? '-') . "\n" .
+                    "LOKASI: " . ($activeLocation->name ?? '-');
                     @endphp
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors align-middle">
                         <td class="px-4 py-4 text-center">
@@ -255,23 +257,23 @@
                         <td class="px-6 py-4 text-center">
                             @php
                             $detailPayload = [
-                                "id" => $asset->id,
-                                "name" => $asset->name,
-                                "asset_code" => $asset->asset_code ?? "-",
-                                "accurate_no" => $asset->accurate_no ?? "-",
-                                "serial_number" => $asset->serial_number ?? "-",
-                                "description" => $asset->description ?? "-",
-                                "quantity" => $asset->quantity ?? 1,
-                                "purchase_price" => number_format($asset->purchase_price ?? 0, 0, ",", "."),
-                                "book_value" => number_format($asset->book_value ?? 0, 0, ",", "."),
-                                "category" => $asset->category->name ?? $asset->accurate_category_name ?? "-",
-                                "department" => $asset->department->name ?? "-",
-                                "status" => strtoupper($asset->status ?? "-"),
-                                "location" => $activeLocation->name ?? "-",
-                                "building" => $activeLocation->building ?? "-",
-                                "floor" => $activeLocation->floor ?? "-",
-                                "room" => $activeLocation->room ?? "-",
-                                "print_url" => route("admin.assets.print-qrcode", $asset->id)
+                            "id" => $asset->id,
+                            "name" => $asset->name,
+                            "asset_code" => $asset->asset_code ?? "-",
+                            "accurate_no" => $asset->accurate_no ?? "-",
+                            "serial_number" => $asset->serial_number ?? "-",
+                            "description" => $asset->description ?? "-",
+                            "quantity" => $asset->quantity ?? 1,
+                            "purchase_price" => number_format($asset->purchase_price ?? 0, 0, ",", "."),
+                            "book_value" => number_format($asset->book_value ?? 0, 0, ",", "."),
+                            "category" => $asset->category->name ?? $asset->accurate_category_name ?? "-",
+                            "department" => $asset->department->name ?? "-",
+                            "status" => strtoupper($asset->status ?? "-"),
+                            "location" => $activeLocation->name ?? "-",
+                            "building" => $activeLocation->building ?? "-",
+                            "floor" => $activeLocation->floor ?? "-",
+                            "room" => $activeLocation->room ?? "-",
+                            "print_url" => route("admin.assets.print-qrcode", $asset->id)
                             ];
                             @endphp
 
@@ -337,7 +339,7 @@
 <!-- 🔍 MODAL DETAIL ASET (Tampilan Lebih Rapi & Terstruktur) -->
 <div id="modalDetailAsset" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transform transition-all">
-        
+
         <!-- Modal Header -->
         <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
             <div>
@@ -351,7 +353,7 @@
 
         <!-- Modal Body -->
         <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-            
+
             <!-- Top Badges & Quick Info Card -->
             <div class="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="space-y-2">
@@ -382,11 +384,11 @@
 
             <!-- Grid Detail Informasi Lengkap -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                
+
                 <!-- Spesifikasi & Finansial -->
                 <div class="p-5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/30 space-y-3">
                     <h4 class="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-2">Spesifikasi & Keuangan</h4>
-                    
+
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <span class="text-slate-400 block text-[10px] uppercase">Serial Number</span>
@@ -418,7 +420,7 @@
                 <!-- Informasi Lokasi -->
                 <div class="p-5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/30 space-y-3">
                     <h4 class="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-2">Lokasi & Penempatan</h4>
-                    
+
                     <div>
                         <span class="text-slate-400 block text-[10px] uppercase">Lokasi Utama / Ruangan</span>
                         <p id="m-location" class="font-bold text-slate-800 dark:text-slate-100 text-sm mt-0.5">-</p>
