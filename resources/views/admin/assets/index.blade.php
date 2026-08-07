@@ -25,10 +25,12 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <form action="{{ route('admin.assets.sync-all') }}" method="POST">
-                @csrf
-                <button id="btnSyncSingle" type="submit">🔄 Sync Semua Data dari Accurate</button>
-            </form>
+            <div class="hidden">
+                <form action="{{ route('admin.assets.sync-all') }}" method="POST">
+                    @csrf
+                    <button id="btnSyncSingle" type="submit">🔄 Sync Semua Data dari Accurate</button>
+                </form>
+            </div>
 
             @can('reports.export')
             <a href="{{ route('admin.assets.export-excel', request()->query()) }}"
