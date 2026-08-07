@@ -8,6 +8,8 @@ use App\Models\AssetTransfer;
 use App\Models\AssetCategory;
 use App\Models\Department;
 use App\Services\AssetSyncService;
+use App\Jobs\SyncAllAssetsJob;        
+use App\Jobs\SyncAssetFromAccurateJob; 
 use Illuminate\Support\Facades\Log;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
@@ -493,23 +495,21 @@ class AssetController extends Controller
             return back()->with('error', 'Aset ini belum memiliki ID Accurate yang terhubung.');
         }
 
-        $syncService = app(AssetSyncService::class);
-        $result = $syncService->syncSingleAsset($accurateId);
+        // Jalankan via Queue Job di background agar tidak blocking / timeout
+        SyncAssetFromAccurateJob::dispatch($accurateId);
 
-        if ($result['success'] ?? false) {
-            return back()->with('success', "Aset '{$asset->name}' berhasil diperbarui dari Accurate!");
-        }
-
-        return back()->with('error', $result['message'] ?? 'Gagal memperbarui data dari Accurate.');
+        return back()->with('success', "Proses sync untuk aset '{$asset->name}' sedang berjalan di latar belakang.");
     }
 
     public function syncAll()
     {
         try {
-            app(AssetSyncService::class)->syncFromAccurate();
-            return back()->with('success', 'Proses sync seluruh data dari Accurate berhasil dijalankan!');
+            // Jalankan via Queue Job mass sync di background
+            SyncAllAssetsJob::dispatch();
+            
+            return back()->with('success', 'Proses sync seluruh data dari Accurate sedang berjalan di latar belakang!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat sync massal: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menjadwalkan sync massal: ' . $e->getMessage());
         }
     }
 }
