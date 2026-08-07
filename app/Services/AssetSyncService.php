@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Asset;
+use App\Models\AssetLocation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -18,6 +19,8 @@ class AssetSyncService
 
     /**
      * Helper untuk validasi prefix kode barang yang diizinkan.
+     * Satu-satunya tempat filtering prefix — dipakai baik oleh full sync
+     * maupun single-item sync (webhook), supaya tidak ada logic ganda yang bisa beda.
      */
     protected function isAllowedAssetCode(?string $accurateNo): bool
     {
@@ -25,7 +28,14 @@ class AssetSyncService
     }
 
     /**
-     * FULL SYNC / SINGLE SYNC ROUTER
+     * FULL SYNC
+     *
+     * $specificId diisi → sync 1 item saja.
+     * $specificId kosong → tarik SEMUA fixed asset dari Accurate secara streaming
+     * (per-item langsung diproses & disimpan ke DB begitu diterima), dengan
+     * checkpoint per-halaman sehingga aman dilanjutkan kalau terputus.
+     *
+     * @param  bool  $fresh  true = paksa mulai full sync dari awal (abaikan checkpoint tersimpan)
      */
     public function syncFromAccurate($specificId = null, bool $fresh = false): array
     {
@@ -80,7 +90,11 @@ class AssetSyncService
     }
 
     /**
-     * Proses 1 item hasil dari Accurate dengan Transaction per-item.
+     * Proses 1 item hasil dari Accurate: validasi prefix, cari existing, lalu
+     * insert/update. Dibungkus transaction per-item — 1 item gagal tidak
+     * merusak/rollback item lain yang sudah sukses diproses sebelumnya.
+     *
+     * @param  array  $counters  passed by reference: ['created'=>, 'updated'=>, 'skipped'=>, 'failed'=>]
      */
     protected function processSingleItem(array $item, array &$counters): void
     {
@@ -128,7 +142,7 @@ class AssetSyncService
     }
 
     /**
-     * Bangun snapshot hash dari field sumber Accurate.
+     * Bangun snapshot hash HANYA dari field yang sumbernya Accurate.
      */
     protected function buildAccurateHash(array $item): string
     {
@@ -203,7 +217,7 @@ class AssetSyncService
     }
 
     /**
-     * Method Update Massal untuk Multiple-QTY Items dengan Hash Skip
+     * Method Update Massal untuk Multiple-QTY Items
      */
     protected function applyUpdateBatch($existings, array $item): array
     {

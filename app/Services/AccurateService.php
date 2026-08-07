@@ -141,6 +141,61 @@ class AccurateService
         return $response->json();
     }
 
+    public function getItems()
+    {
+        $token = $this->getToken();
+
+        if (!$token || !$token->db_id) {
+            throw new \Exception('DB ID belum ada');
+        }
+
+        $accessToken = $this->getValidAccessToken();
+        $db = $this->openDb($accessToken, $token->db_id);
+
+        if (empty($db['session']) || empty($db['host'])) {
+            throw new \Exception('Session/Host tidak valid dari Accurate');
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $accessToken,
+            'X-Session-ID'  => $db['session'],
+        ])->get($db['host'] . '/accurate/api/item/list.do');
+
+        return [
+            'status' => $response->status(),
+            'body'   => $response->json(),
+        ];
+    }
+
+    public function getAllWarehouses()
+    {
+        $accessToken = $this->getValidAccessToken();
+        $token = $this->getToken();
+
+        $response = Http::timeout(30)
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'X-Session-ID'  => $token->session,
+                'Accept'        => 'application/json',
+            ])
+            ->get($token->host . '/accurate/api/warehouse/list.do', [
+                'page' => 1,
+                'sp.pageSize' => 100,
+            ]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Gagal request data Warehouse ke Accurate: ' . $response->body());
+        }
+
+        $data = $response->json();
+
+        if (!isset($data['s']) || !$data['s']) {
+            throw new \Exception('Respon Accurate menyatakan gagal: ' . json_encode($data));
+        }
+
+        return $data['d'] ?? [];
+    }
+
     public function getSingleFixedAssetDetail(string $id): ?array
     {
         $response = $this->makeRequest('GET', '/fixed-asset/detail.do', ['id' => $id]);
@@ -188,6 +243,17 @@ class AccurateService
 
     /**
      * FULL SYNC — STREAMING & RESUMABLE.
+     *
+     * Menarik SELURUH fixed asset dari Accurate, halaman demi halaman, dan
+     * langsung memanggil $onItem(...) untuk tiap item begitu detail-nya berhasil
+     * diambil — sehingga item yang sudah diproses TIDAK hilang meskipun proses
+     * berhenti di tengah jalan (misalnya karena API Accurate error atau command
+     * di-kill). Progres halaman disimpan ke cache sehingga run berikutnya otomatis
+     * melanjutkan dari halaman terakhir yang belum selesai, bukan mengulang dari awal.
+     *
+     * @param  callable  $onItem  function(array $item): void — dipanggil per item
+     * @param  bool  $fresh  true = paksa mulai dari page 1, abaikan checkpoint lama
+     * @return array{pages_fetched:int, items_fetched:int, items_failed:int}
      */
     public function syncAllFixedAssets(callable $onItem, bool $fresh = false): array
     {
@@ -202,7 +268,7 @@ class AccurateService
 
         $page = (int) Cache::get($checkpointKey, 1);
         $pageSize = 100;
-        $maxPages = 1000; 
+        $maxPages = 1000; // safety net — cukup untuk ±100.000 aset
         $maxRetriesPerPage = 3;
         $maxRetriesPerDetail = 3;
 
@@ -214,6 +280,7 @@ class AccurateService
             $listData = $this->fetchListPageWithRetry($accessToken, $token, $page, $pageSize, $maxRetriesPerPage);
 
             if ($listData === null) {
+                // Halaman ini gagal total setelah retry — STOP di sini, jangan lompat/skip diam-diam.
                 Cache::forever($checkpointKey, $page);
                 logger()->error("ACCURATE SYNC BERHENTI di page {$page} setelah {$maxRetriesPerPage}x percobaan gagal.");
                 throw new \Exception("Gagal mengambil data page {$page} dari Accurate. Sync dihentikan — jalankan ulang command, akan otomatis lanjut dari page {$page}.");
@@ -222,7 +289,7 @@ class AccurateService
             $items = $listData['d'] ?? [];
 
             if (empty($items)) {
-                break; 
+                break; // sudah tidak ada halaman lagi
             }
 
             foreach ($items as $item) {
@@ -247,7 +314,7 @@ class AccurateService
                     logger()->error("GAGAL memproses item ID {$id} ke DB: " . $e->getMessage());
                 }
 
-                usleep(20000); 
+                usleep(20000); // jaga rate limit Accurate
             }
 
             $pagesFetched++;
@@ -259,15 +326,17 @@ class AccurateService
                 'total_gagal'    => $itemsFailed,
             ]);
 
+            // Checkpoint disimpan SETELAH halaman ini selesai diproses penuh
             Cache::forever($checkpointKey, $page + 1);
 
             if (count($items) < $pageSize) {
-                break; 
+                break; // halaman terakhir
             }
 
             $page++;
         }
 
+        // Selesai total tanpa error fatal → reset checkpoint, run berikutnya mulai dari page 1
         Cache::forget($checkpointKey);
 
         return [
@@ -288,8 +357,8 @@ class AccurateService
                         'Accept'        => 'application/json',
                     ])
                     ->get($token->host . '/accurate/api/fixed-asset/list.do', [
-                        'sp.page'     => $page,      
-                        'sp.pageSize' => $pageSize,  
+                        'sp.page'     => $page,      // Wajib menggunakan awalan sp.page
+                        'sp.pageSize' => $pageSize,  // Wajib menggunakan awalan sp.pageSize
                     ]);
 
                 if ($response->successful()) {
@@ -337,7 +406,7 @@ class AccurateService
             }
 
             if ($attempt < $maxRetries) {
-                sleep($attempt * 2); 
+                sleep($attempt * 2); // backoff: 2s, 4s
             }
         }
 
