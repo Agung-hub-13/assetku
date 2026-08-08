@@ -147,7 +147,28 @@ class Asset extends Model
 
     public function transfer()
     {
+        return $this->hasOne(AssetTransfer::class, 'asset_id')
+            ->where('status', 'completed')
+            ->latestOfMany();
+    }
+
+    public function latestTransfer()
+    {
         return $this->hasOne(AssetTransfer::class, 'asset_id')->latestOfMany();
+    }
+
+    public function activeLoan()
+    {
+        return $this->hasOne(AssetLoan::class, 'asset_id')
+            ->whereIn('status', ['approved', 'borrowed'])
+            ->latestOfMany();
+    }
+
+    public function activeMaintenance()
+    {
+        return $this->hasOne(AssetMaintenance::class, 'asset_id')
+            ->where('status', 'in_progress')
+            ->latestOfMany();
     }
 
     public function category()

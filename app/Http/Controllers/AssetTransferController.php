@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class AssetTransferController extends Controller
@@ -316,9 +317,10 @@ class AssetTransferController extends Controller
 
     public function approve(Request $request, $id)
     {
-        $transfer = AssetTransfer::findOrFail($id);
+        // Menggunakan lockForUpdate untuk mengunci baris data dari proses paralel/klik ganda
+        $transfer = AssetTransfer::where('id', $id)->lockForUpdate()->firstOrFail();
 
-        if ($transfer->status !== 'draft' && $transfer->status !== 'waiting_approval') {
+        if (!in_array($transfer->status, ['draft', 'waiting_approval'])) {
             return redirect()->back()->with('error', 'Status transaksi tidak valid untuk disetujui.');
         }
 
@@ -343,10 +345,10 @@ class AssetTransferController extends Controller
                 }
                 if ($transfer->to_user_id) {
                     // Menyesuaikan kolom penanggung jawab di tabel assets (bisa user_id / assigned_to)
-                    if (\Schema::hasColumn('assets', 'user_id')) {
+                    if (Schema::hasColumn('assets', 'user_id')) {
                         $assetUpdateData['user_id'] = $transfer->to_user_id;
                     }
-                    if (\Schema::hasColumn('assets', 'assigned_to')) {
+                    if (Schema::hasColumn('assets', 'assigned_to')) {
                         $assetUpdateData['assigned_to'] = $transfer->to_user_id;
                     }
                 }
@@ -386,7 +388,8 @@ class AssetTransferController extends Controller
 
     public function reject(Request $request, $id)
     {
-        $transfer = AssetTransfer::findOrFail($id);
+        // Menggunakan lockForUpdate untuk keamanan transaksi data
+        $transfer = AssetTransfer::where('id', $id)->lockForUpdate()->firstOrFail();
 
         if ($transfer->status === 'completed') {
             return redirect()->back()->with('error', 'Mutasi yang sudah selesai tidak dapat ditolak.');

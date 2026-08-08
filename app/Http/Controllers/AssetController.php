@@ -78,6 +78,8 @@ class AssetController extends Controller
                 $q->latest();
             },
             'transfer.toLocation:id,name,building,floor,room',
+            'activeLoan.user:id,name',
+            'activeMaintenance.technician:id,name',
         ]);
 
         // 2. Filter Search (PostgreSQL Case-Insensitive ILIKE)
@@ -304,7 +306,7 @@ class AssetController extends Controller
 
     public function show($id)
     {
-        $asset = Asset::with(['category', 'location', 'department', 'user'])->findOrFail($id);
+        $asset = Asset::with(['category', 'location', 'department', 'user', 'activeLoan.user', 'activeMaintenance.technician'])->findOrFail($id);
 
         $qrCode = QrCode::encoding('UTF-8')
             ->size(200)

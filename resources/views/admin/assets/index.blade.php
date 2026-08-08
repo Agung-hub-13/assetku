@@ -220,16 +220,30 @@
 
                         <!-- Lokasi & Departemen -->
                         <td class="px-6 py-4">
-                            <div class="flex flex-col gap-0.5">
-                                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
-                                    📍 {{ $activeLocation->name ?? 'Belum Ditentukan' }}
+                            <div class="flex flex-col gap-1">
+                                <!-- Lokasi Utama -->
+                                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 truncate max-w-[220px]" title="{{ $activeLocation->name ?? 'Belum Ditentukan' }}">
+                                    📍 <span class="truncate">{{ $activeLocation->name ?? 'Belum Ditentukan' }}</span>
                                 </span>
-                                <span class="text-[11px] text-slate-400">
-                                    🏢 Dept: {{ $asset->department->name ?? '-' }}
-                                </span>
-                                <span class="text-[11px] text-slate-400">
-                                    🧑 User: {{ $asset->user->name ?? '-' }}
-                                </span>
+
+                                <!-- Detail Gedung & Ruang (Aman dari kosong) -->
+                                <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <span>🏢 Gedung: <strong>{{ $asset->building_name ?? $activeLocation->building ?? 'Belum Ditentukan' }}</strong></span>
+                                    <span>•</span>
+                                    <span>🚪 Ruang: <strong>{{ $asset->room_name ?? $activeLocation->room ?? 'Belum Ditentukan' }}</strong></span>
+                                </div>
+
+                                <!-- Departemen & User Pendukung -->
+                                <div class="flex flex-col text-[11px] text-slate-400 dark:text-slate-400 space-y-0.5 pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                                    <span class="flex items-center gap-1">
+                                        🏢 <span class="font-medium text-slate-500 dark:text-slate-400">Dept:</span>
+                                        <span class="truncate max-w-[170px]" title="{{ $asset->department->name ?? '-' }}">{{ $asset->department->name ?? '-' }}</span>
+                                    </span>
+                                    <span class="flex items-center gap-1">
+                                        🧑 <span class="font-medium text-slate-500 dark:text-slate-400">User:</span>
+                                        <span class="truncate max-w-[170px]" title="{{ $asset->user->name ?? '-' }}">{{ $asset->user->name ?? '-' }}</span>
+                                    </span>
+                                </div>
                             </div>
                         </td>
 
@@ -252,6 +266,28 @@
                             <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 uppercase">MAINTENANCE</span>
                             @else
                             <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-lg bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 uppercase">{{ strtoupper($asset->status) }}</span>
+                            @endif
+
+                            @if(strtolower($asset->status) === 'borrowed' && $asset->activeLoan)
+                            <div class="mt-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-[10px] text-amber-700 dark:text-amber-400 max-w-[180px]">
+                                <div class="font-bold flex items-center gap-1">
+                                    🧑 <span class="truncate">Dipinjam: {{ $asset->activeLoan->user->name ?? '-' }}</span>
+                                </div>
+                                <div class="text-amber-600 dark:text-amber-500">s/d {{ \Carbon\Carbon::parse($asset->activeLoan->expected_return_date)->format('d M Y') }}</div>
+                                <a href="{{ route('admin.asset_loans.show', $asset->activeLoan->id) }}" class="underline font-semibold hover:text-amber-800 dark:hover:text-amber-300">Lihat Detail</a>
+                            </div>
+                            @endif
+
+                            @if(strtolower($asset->status) === 'maintenance' && $asset->activeMaintenance)
+                            <div class="mt-1.5 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-[10px] text-orange-700 dark:text-orange-400 max-w-[180px]">
+                                <div class="font-bold flex items-center gap-1">
+                                    🛠️ <span class="truncate">Teknisi: {{ $asset->activeMaintenance->technician->name ?? $asset->activeMaintenance->vendor_name ?? '-' }}</span>
+                                </div>
+                                <div class="text-orange-600 dark:text-orange-500">
+                                    Target selesai: {{ $asset->activeMaintenance->due_date ? \Carbon\Carbon::parse($asset->activeMaintenance->due_date)->format('d M Y') : '-' }}
+                                </div>
+                                <a href="{{ route('admin.asset_maintenances.show', $asset->activeMaintenance->id) }}" class="underline font-semibold hover:text-orange-800 dark:hover:text-orange-300">Lihat Detail</a>
+                            </div>
                             @endif
                         </td>
 
@@ -509,35 +545,32 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Kategori</label>
-                                <select name="category_id" id="a_category" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                                <!-- Ditambahkan class searchable-select -->
+                                <select name="category_id" id="a_category" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                                     <option value="">-- Pilih Kategori --</option>
                                     @foreach($categories ?? [] as $category)
-                                    <option value="{{ $category->id }}">
-                                        {{ $category->name }}
-                                    </option>
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Departemen</label>
-                                <select name="department_id" id="a_department" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                                <!-- Ditambahkan class searchable-select -->
+                                <select name="department_id" id="a_department" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                                     <option value="">-- Pilih Departemen --</option>
-                                    @foreach($departments ?? [] as $dept)
-                                    <option value="{{ $dept->id }}">
-                                        {{ $dept->name }}
-                                    </option>
+                                    @foreach($departments ?? [] as $department)
+                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">User</label>
-                                <select name="user_id" id="a_user" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                                <!-- Ditambahkan class searchable-select -->
+                                <select name="user_id" id="a_user" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                                     <option value="">-- Pilih User --</option>
                                     @foreach($users ?? [] as $user)
-                                    <option value="{{ $user->id }}">
-                                        {{ $user->name }}
-                                    </option>
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -545,17 +578,17 @@
 
                         <div>
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Lokasi Aset</label>
-                            <select name="location_id" id="a_location" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                            <!-- Ditambahkan class searchable-select -->
+                            <select name="location_id" id="a_location" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                                 <option value="">-- Pilih Lokasi --</option>
                                 @foreach($locations ?? [] as $location)
                                 <option value="{{ $location->id }}">
-                                    {{ $location->parent->name ?? '' }} {{ $location->parent ? '»' : '' }} {{ $location->name }}
+                                    {{ $location->name }} ({{ $location->building ?? '-' }} - {{ $location->floor ?? '-' }} - {{ $location->room ?? '-' }})
                                 </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <!-- 📝 INPUT DESKRIPSI -->
                         <div>
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Deskripsi Aset</label>
                             <textarea name="description" id="a_description" rows="3" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition" placeholder="Keterangan tambahan aset..."></textarea>
@@ -614,7 +647,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Kategori Aset</label>
-                    <select name="category_id" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-sm font-medium">
+                    <select name="category_id" id="bulk_category_id" class="searchable-select w-full">
                         <option value="">-- Pilih Kategori --</option>
                         @foreach($categories ?? [] as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -624,7 +657,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Departemen</label>
-                    <select name="department_id" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-sm font-medium">
+                    <select name="department_id" id="bulk_department_id" class="searchable-select w-full">
                         <option value="">-- Pilih Departemen --</option>
                         @foreach($departments ?? [] as $dept)
                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -634,7 +667,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Lokasi Aset</label>
-                    <select name="location_id" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 bg-white dark:bg-slate-900 text-slate-800 dark:text-white text-sm font-medium">
+                    <select name="location_id" id="bulk_location_id" class="searchable-select w-full">
                         <option value="">-- Pilih Lokasi --</option>
                         @foreach($locations ?? [] as $location)
                         <option value="{{ $location->id }}">{{ $location->name }}</option>
@@ -677,6 +710,24 @@
 </div>
 
 <script>
+    let choicesInstances = {};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi Choices.js dan simpan ke objek global
+        const elements = document.querySelectorAll('.searchable-select');
+        elements.forEach(el => {
+            const instance = new Choices(el, {
+                searchEnabled: true,
+                itemSelectText: '',
+                shouldSort: false,
+                placeholder: true,
+                placeholderValue: 'Cari atau pilih...',
+                position: 'bottom',
+            });
+            choicesInstances[el.id] = instance;
+        });
+    });
+
     function openDetailModal(data) {
         document.getElementById('m-name').innerText = data.name;
         document.getElementById('m-code').innerText = data.asset_code;
@@ -695,9 +746,7 @@
         document.getElementById('m-floor').innerText = data.floor && data.floor !== '-' ? data.floor : '-';
         document.getElementById('m-room').innerText = data.room && data.room !== '-' ? data.room : '-';
 
-        // Mengarahkan tombol cetak langsung ke halaman cetak QR code (print-qrcode.blade.php)
         document.getElementById('m-print-btn').href = data.print_url;
-
         document.getElementById('modalDetailAsset').classList.remove('hidden');
     }
 
@@ -790,6 +839,12 @@
         method.innerHTML = '';
 
         form.reset();
+
+        // Reset Choices.js jika ada yang terpilih sebelumnya
+        Object.keys(choicesInstances).forEach(id => {
+            choicesInstances[id].setChoiceByValue('');
+        });
+
         document.getElementById('a_status').value = 'draft';
         document.getElementById('a_quantity').value = 1;
 
@@ -817,12 +872,14 @@
         document.getElementById('a_quantity').value = data.quantity ?? 1;
         document.getElementById('a_price').value = data.purchase_price ?? 0;
         document.getElementById('a_status').value = data.status ?? 'draft';
-        document.getElementById('a_category').value = data.category_id ?? '';
-        document.getElementById('a_user').value = data.user_id ?? '';
-        document.getElementById('a_department').value = data.department_id ?? '';
-        document.getElementById('a_location').value = data.location_id ?? '';
         document.getElementById('a_description').value = data.description ?? '';
         document.getElementById('a_purchase_date').value = data.purchase_date ? data.purchase_date.substring(0, 10) : '';
+
+        // Mengatur nilai pilihan Choices.js secara dinamis saat tombol edit diklik
+        if (choicesInstances['a_category']) choicesInstances['a_category'].setChoiceByValue(String(data.category_id ?? ''));
+        if (choicesInstances['a_department']) choicesInstances['a_department'].setChoiceByValue(String(data.department_id ?? ''));
+        if (choicesInstances['a_user']) choicesInstances['a_user'].setChoiceByValue(String(data.user_id ?? ''));
+        if (choicesInstances['a_location']) choicesInstances['a_location'].setChoiceByValue(String(data.location_id ?? ''));
 
         crudModal.classList.remove('hidden');
         setTimeout(() => {
