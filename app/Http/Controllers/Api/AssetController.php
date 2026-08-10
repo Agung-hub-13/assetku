@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Asset;
+use App\Models\AssetLocation; // Pastikan model lokasi Anda sesuai
+use App\Models\AssetCategory; // Pastikan model kategori Anda sesuai
 
 class AssetController extends Controller
 {
@@ -70,6 +72,7 @@ class AssetController extends Controller
             ], 500);
         }
     }
+
     // Menyimpan data aset baru dari aplikasi mobile/API
     public function store(Request $request)
     {
@@ -107,6 +110,46 @@ class AssetController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan aset: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Mengambil daftar lokasi untuk opsi Filter Dropdown di Mobile
+    public function getLocations()
+    {
+        try {
+            // Sesuaikan nama Model jika berbeda (misal: Location atau AssetLocation)
+            $locations = AssetLocation::select('id', 'name')->orderBy('name', 'asc')->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Lokasi Berhasil Diambil',
+                'data'    => $locations
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil lokasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Mengambil daftar kategori untuk opsi Filter Dropdown di Mobile
+    public function getCategories()
+    {
+        try {
+            // Sesuaikan nama Model jika berbeda (misal: Category atau AssetCategory)
+            $categories = AssetCategory::select('id', 'name')->orderBy('name', 'asc')->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Kategori Berhasil Diambil',
+                'data'    => $categories
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil kategori: ' . $e->getMessage()
             ], 500);
         }
     }

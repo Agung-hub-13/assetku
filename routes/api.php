@@ -13,5 +13,10 @@ Route::post('/accurate/sync-assets', [AssetSyncController::class, 'sync']);
 Route::post('/accurate/webhook', [AccurateWebhookController::class, 'handle']);
 
 Route::post('/login', [AuthController::class, 'login']);
+
 Route::get('/assets', [AssetController::class, 'index']);
 Route::post('/assets', [AssetController::class, 'store']);
+
+// TAMBAHKAN ROUTE INI untuk Dropdown Filter
+Route::get('/asset-locations', [AssetController::class, 'getLocations']); // Sesuaikan dengan nama method di AssetController Anda
+Route::get('/asset-categories', [AssetController::class, 'getCategories']); // Sesuaikan dengan nama method di AssetController Anda
