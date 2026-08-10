@@ -46,14 +46,12 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border-radius: 2px;
 
-            /* penting untuk printer tape: tiap label = 1 halaman cetak terpisah */
-            page-break-after: always;
-            break-after: page;
-        }
-
-        .stiker-page:last-child {
-            page-break-after: auto;
-            break-after: auto;
+            /* SEMUA label mengalir ke bawah dalam SATU halaman panjang
+               (tinggi @page = auto -> mengikuti total tinggi semua label),
+               dicetak sekali jalan tanpa tape terbuang antar label.
+               Cuma dijaga supaya 1 label tidak terpotong di tengah: */
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         @media print {
@@ -73,8 +71,6 @@
                 width: 24mm;
                 box-shadow: none;
                 border-radius: 0;
-                page-break-inside: avoid;
-                break-inside: avoid;
             }
         }
 
@@ -146,7 +142,7 @@
 
     <div class="no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <h2 class="font-bold text-slate-800 text-lg mb-1">Siap Mencetak {{ $assets->count() }} QR Code</h2>
-        <p class="text-xs text-slate-500 mb-4">Pratinjau di bawah menunjukkan bagaimana label akan tersusun secara efisien.</p>
+        <p class="text-xs text-slate-500 mb-4">Semua label akan tercetak berurutan dalam satu strip panjang, tidak boros tape.</p>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md active:scale-95 text-sm cursor-pointer">
             🖨️ Cetak Sekarang
         </button>
