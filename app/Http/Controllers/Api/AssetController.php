@@ -17,12 +17,9 @@ class AssetController extends Controller
                 'category:id,name',
                 'department:id,name',
                 'user:id,name',
-                'transfer' => function ($q) {
-                    $q->latest();
-                },
-                'transfer.toLocation:id,name,building,floor,room',
+                'latestTransfer', // Diubah dari 'transfer' mengikuti model Asset
                 'activeLoan.user:id,name',
-                'activeMaintenance.technician:id,name',
+                'activeMaintenance', // Disesuaikan jika relasi technician tidak ada di model AssetMaintenance
             ]);
 
             // Filter pencarian jika dikirim dari Flutter
@@ -46,7 +43,7 @@ class AssetController extends Controller
                 $query->where('status', $request->status);
             }
 
-            // Ambil data (bisa diatur get() atau paginate jika diperlukan)
+            // Ambil data
             $assets = $query->orderBy('updated_at', 'desc')->get();
 
             return response()->json([
