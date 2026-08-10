@@ -12,7 +12,6 @@ class AssetController extends Controller
     public function index(Request $request)
     {
         try {
-            // Batasi relasi yang paling penting saja agar memori tidak habis
             $query = Asset::with([
                 'location:id,name,building,floor,room',
                 'category:id,name',
@@ -20,6 +19,7 @@ class AssetController extends Controller
                 'user:id,name',
             ]);
 
+            // 1. Filter Pencarian Teks (Nama, Kode, dll)
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
@@ -35,11 +35,26 @@ class AssetController extends Controller
                 });
             }
 
+            // 2. Filter berdasarkan Lokasi
+            if ($request->filled('location_id')) {
+                $query->where('location_id', $request->location_id);
+            }
+
+            // 3. Filter berdasarkan Kategori
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
+
+            // 4. Filter berdasarkan Rentang Tanggal Pembelian
+            if ($request->filled('date_from') && $request->filled('date_to')) {
+                $query->whereBetween('purchase_date', [$request->date_from, $request->date_to]);
+            }
+
+            // 5. Filter Status
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
-            // Gunakan pagination (misal 50 data per request) agar memori aman
             $assets = $query->orderBy('updated_at', 'desc')->paginate(50);
 
             return response()->json([
@@ -55,7 +70,6 @@ class AssetController extends Controller
             ], 500);
         }
     }
-    
     // Menyimpan data aset baru dari aplikasi mobile/API
     public function store(Request $request)
     {
