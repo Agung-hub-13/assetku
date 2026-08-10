@@ -49,7 +49,7 @@
     }
 
     .brand-text {
-        font-size: 8pt; /* Diubah ke pt agar ukurannya konsisten dan tegas dibaca printer */
+        font-size: 8pt;
         font-weight: 800;
         color: #000000;
         margin-bottom: 1mm;
@@ -76,7 +76,7 @@
 
     .asset-code-text {
         margin-top: 1mm;
-        font-size: 9.5pt; /* Diperbesar agar kode aset sangat jelas terbaca */
+        font-size: 9.5pt;
         font-weight: 900;
         color: #000000;
         letter-spacing: 0.3px;

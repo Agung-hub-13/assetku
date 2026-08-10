@@ -14,7 +14,7 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 100%;
+            width: 24mm;
             background-color: #ffffff;
             -webkit-print-color-adjust: exact;
         }
@@ -28,18 +28,19 @@
 
         @media print {
             .no-print { display: none; }
+            html, body { width: 24mm; }
         }
 
         .stiker-page {
             width: 24mm;
-            min-height: 24mm;
-            margin: 0 auto;
             display: flex;
             justify-content: center;
             align-items: center;
-            page-break-after: always;
-            break-after: page;
+            margin: 0;
+            padding: 1.5mm 0;
             box-sizing: border-box;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
     </style>
 </head>
@@ -47,7 +48,7 @@
 
     <div class="no-print bg-slate-50 p-4 rounded-2xl shadow-sm border border-slate-200">
         <h2 class="font-bold text-slate-800 text-lg mb-1">Siap Mencetak {{ $assets->count() }} QR Code</h2>
-        <p class="text-xs text-slate-500 mb-4">Tiap label akan tercetak rapi sesuai lebar tape LW-600P.</p>
+        <p class="text-xs text-slate-500 mb-4">Label tercetak beruntun secara efisien tanpa boros kertas.</p>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md active:scale-95 text-sm cursor-pointer">
             🖨️ Cetak Sekarang
         </button>
