@@ -12,17 +12,14 @@ class AssetController extends Controller
     public function index(Request $request)
     {
         try {
+            // Batasi relasi yang paling penting saja agar memori tidak habis
             $query = Asset::with([
                 'location:id,name,building,floor,room',
                 'category:id,name',
                 'department:id,name',
                 'user:id,name',
-                'latestTransfer', // Diubah dari 'transfer' mengikuti model Asset
-                'activeLoan.user:id,name',
-                'activeMaintenance', // Disesuaikan jika relasi technician tidak ada di model AssetMaintenance
             ]);
 
-            // Filter pencarian jika dikirim dari Flutter
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
@@ -38,13 +35,12 @@ class AssetController extends Controller
                 });
             }
 
-            // Filter berdasarkan status jika ada
             if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
-            // Ambil data
-            $assets = $query->orderBy('updated_at', 'desc')->get();
+            // Gunakan pagination (misal 50 data per request) agar memori aman
+            $assets = $query->orderBy('updated_at', 'desc')->paginate(50);
 
             return response()->json([
                 'success' => true,
@@ -59,7 +55,7 @@ class AssetController extends Controller
             ], 500);
         }
     }
-
+    
     // Menyimpan data aset baru dari aplikasi mobile/API
     public function store(Request $request)
     {
