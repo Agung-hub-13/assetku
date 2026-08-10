@@ -5,6 +5,7 @@ use App\Http\Controllers\AssetSyncController;
 use App\Http\Controllers\AccurateTokenController;
 use App\Http\Controllers\AccurateWebhookController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AssetController;
 
 Route::get('/test-accurate', [AccurateTokenController::class, 'testAccurate']);
 Route::get('/test-detail', [AccurateTokenController::class, 'testDetail']);
