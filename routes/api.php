@@ -12,3 +12,5 @@ Route::post('/accurate/sync-assets', [AssetSyncController::class, 'sync']);
 Route::post('/accurate/webhook', [AccurateWebhookController::class, 'handle']);
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/assets', [AssetController::class, 'index']);
+Route::post('/assets', [AssetController::class, 'store']);
