@@ -1,3 +1,7 @@
+{{-- resources/views/admin/assets/partials/qr-sticker.blade.php --}}
+{{-- HANYA markup di sini. Styling ada di <head> masing-masing halaman pemanggil
+     (print-qrcode.blade.php & print-qrcode-bulk.blade.php) supaya tidak
+     ter-duplikasi berkali-kali saat partial ini di-loop pada cetak massal. --}}
 @php
     $activeLocation = $asset->transfer->toLocation ?? $asset->location;
 
@@ -33,59 +37,3 @@
         {{ $asset->asset_code ?? $asset->asset_number ?? '-' }}
     </div>
 </div>
-
-<style>
-    .stiker-container {
-        box-sizing: border-box;
-        width: 18.5mm; 
-        margin: 0 auto;
-        padding: 0.5mm;
-        background: #ffffff;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .brand-text {
-        font-size: 8pt;
-        font-weight: 800;
-        color: #000000;
-        margin-bottom: 1mm;
-        letter-spacing: 0.2px;
-        line-height: 1.1;
-        text-transform: uppercase;
-        width: 100%;
-    }
-
-    .qr-wrapper {
-        position: relative;
-        display: block;
-        width: 100%;
-        line-height: 0;
-        background: #ffffff;
-        box-sizing: border-box;
-    }
-
-    .qr-wrapper svg {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-
-    .asset-code-text {
-        margin-top: 1mm;
-        font-size: 9.5pt;
-        font-weight: 900;
-        color: #000000;
-        letter-spacing: 0.3px;
-        text-align: center;
-        text-transform: uppercase;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-        line-height: 1.1;
-    }
-</style>

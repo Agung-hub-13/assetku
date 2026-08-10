@@ -14,8 +14,8 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 24mm;
-            background-color: #ffffff;
+            width: 100%;
+            background-color: #f1f5f9;
             -webkit-print-color-adjust: exact;
         }
 
@@ -26,39 +26,139 @@
             text-align: center;
         }
 
-        @media print {
-            .no-print { display: none; }
-            html, body { width: 24mm; }
+        .print-preview-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 40px;
         }
 
         .stiker-page {
             width: 24mm;
+            background: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0;
+            margin: 0 auto;
             padding: 1.5mm 0;
             box-sizing: border-box;
-            page-break-inside: avoid;
-            break-inside: avoid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 2px;
+
+            /* penting untuk printer tape: tiap label = 1 halaman cetak terpisah */
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .stiker-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+
+            html, body {
+                width: 24mm !important;
+                background-color: #ffffff !important;
+            }
+
+            .print-preview-wrapper {
+                gap: 0;
+                padding-bottom: 0;
+            }
+
+            .stiker-page {
+                width: 24mm;
+                box-shadow: none;
+                border-radius: 0;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+
+        /* ===== Styling stiker — satu-satunya definisi, dipakai untuk semua label di loop ===== */
+        .stiker-container {
+            box-sizing: border-box;
+            width: 18.5mm;
+            margin: 0 auto;
+            padding: 0.5mm;
+            background: #ffffff;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', Helvetica, sans-serif; /* dikunci -> tidak lagi terpengaruh Tailwind/reset browser */
+        }
+
+        .stiker-container * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: inherit; /* semua anak elemen ikut font Arial, tidak ada yang bocor dari Tailwind */
+        }
+
+        .brand-text {
+            font-size: 8pt;
+            font-weight: 800;
+            color: #000000;
+            margin-bottom: 1mm;
+            letter-spacing: 0.2px;
+            line-height: 1.1;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        .qr-wrapper {
+            position: relative;
+            display: block;
+            width: 100%;
+            line-height: 0;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+
+        .qr-wrapper svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .asset-code-text {
+            margin-top: 1mm;
+            font-size: 9.5pt;
+            font-weight: 900;
+            color: #000000;
+            letter-spacing: 0.3px;
+            text-align: center;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            line-height: 1.1;
         }
     </style>
 </head>
 <body>
 
-    <div class="no-print bg-slate-50 p-4 rounded-2xl shadow-sm border border-slate-200">
+    <div class="no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <h2 class="font-bold text-slate-800 text-lg mb-1">Siap Mencetak {{ $assets->count() }} QR Code</h2>
-        <p class="text-xs text-slate-500 mb-4">Label tercetak beruntun secara efisien tanpa boros kertas.</p>
+        <p class="text-xs text-slate-500 mb-4">Pratinjau di bawah menunjukkan bagaimana label akan tersusun secara efisien.</p>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md active:scale-95 text-sm cursor-pointer">
             🖨️ Cetak Sekarang
         </button>
     </div>
 
-    @foreach($assets as $asset)
-        <div class="stiker-page">
-            @include('admin.assets.partials.qr-sticker', ['asset' => $asset])
-        </div>
-    @endforeach
+    <div class="print-preview-wrapper">
+        @foreach($assets as $asset)
+            <div class="stiker-page">
+                @include('admin.assets.partials.qr-sticker', ['asset' => $asset])
+            </div>
+        @endforeach
+    </div>
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
