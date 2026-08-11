@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AssetController;
 use App\Http\Controllers\Api\AssetMaintenanceController;
 use App\Http\Controllers\Api\AssetLoanController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AssetTransferController;
 
 Route::get('/test-accurate', [AccurateTokenController::class, 'testAccurate']);
 Route::get('/test-detail', [AccurateTokenController::class, 'testDetail']);
@@ -36,3 +37,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
 });
+
+Route::get('/asset-transfers', [AssetTransferController::class, 'index']);
+Route::post('/asset-transfers', [AssetTransferController::class, 'store']);
