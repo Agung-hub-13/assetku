@@ -206,7 +206,7 @@
                             <input type="checkbox" name="selected_assets[]" value="{{ $asset->id }}" class="asset-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shadow-sm">
                         </td>
 
-                        <!-- Informasi Ringkas -->
+                        <!-- Informasi Ringkas (Nama & Kode) -->
                         <td class="px-6 py-4">
                             <div class="flex flex-col">
                                 <span class="font-bold text-slate-800 dark:text-white text-base leading-snug">{{ $asset->name }}</span>
@@ -218,43 +218,33 @@
                             </div>
                         </td>
 
-                        <!-- Lokasi & Departemen -->
+                        <!-- Lokasi Utama Saja (Dipangkas) -->
                         <td class="px-6 py-4">
                             <div class="flex flex-col gap-1">
-                                <!-- Lokasi Utama -->
                                 <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 truncate max-w-[220px]" title="{{ $activeLocation->name ?? 'Belum Ditentukan' }}">
                                     📍 <span class="truncate">{{ $activeLocation->name ?? 'Belum Ditentukan' }}</span>
                                 </span>
-
-                                <!-- Detail Gedung & Ruang (Aman dari kosong) -->
-                                <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                                    <span>🏢 Gedung: <strong>{{ $asset->building_name ?? $activeLocation->building ?? 'Belum Ditentukan' }}</strong></span>
-                                    <span>•</span>
-                                    <span>🚪 Ruang: <strong>{{ $asset->room_name ?? $activeLocation->room ?? 'Belum Ditentukan' }}</strong></span>
-                                </div>
-
-                                <!-- Departemen & User Pendukung -->
-                                <div class="flex flex-col text-[11px] text-slate-400 dark:text-slate-400 space-y-0.5 pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                                    <span class="flex items-center gap-1">
-                                        🏢 <span class="font-medium text-slate-500 dark:text-slate-400">Dept:</span>
-                                        <span class="truncate max-w-[170px]" title="{{ $asset->department->name ?? '-' }}">{{ $asset->department->name ?? '-' }}</span>
-                                    </span>
-                                    <span class="flex items-center gap-1">
-                                        🧑 <span class="font-medium text-slate-500 dark:text-slate-400">User:</span>
-                                        <span class="truncate max-w-[170px]" title="{{ $asset->user->name ?? '-' }}">{{ $asset->user->name ?? '-' }}</span>
-                                    </span>
-                                </div>
+                                <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[200px]">
+                                    🏢 Dept: {{ $asset->department->name ?? '-' }}
+                                </span>
                             </div>
                         </td>
 
-                        <!-- Nilai Buku -->
+                        <!-- Nilai Buku Ringkas -->
                         <td class="px-6 py-4">
-                            <div class="text-xs">
+                            <div class="flex items-center gap-2">
                                 @if(($asset->book_value ?? 0) <= 0)
-                                    <span class="text-red-600 dark:text-red-400 font-bold">Rp 0 (Habis)</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400 border border-red-200 dark:border-red-900">
+                                    Rp 0 (Habis)
+                                    </span>
                                     @else
-                                    <span class="font-bold text-slate-700 dark:text-slate-200">Rp {{ number_format($asset->book_value, 0, ',', '.') }}</span>
+                                    <span class="text-sm font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
+                                        Rp {{ number_format($asset->book_value, 0, ',', '.') }}
+                                    </span>
                                     @endif
+                            </div>
+                            <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                                Beli: {{ $asset->purchase_date ? \Carbon\Carbon::parse($asset->purchase_date)->format('d M Y') : '-' }}
                             </div>
                         </td>
 
@@ -269,29 +259,14 @@
                             @endif
 
                             @if(strtolower($asset->status) === 'borrowed' && $asset->activeLoan)
-                            <div class="mt-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-[10px] text-amber-700 dark:text-amber-400 max-w-[180px]">
-                                <div class="font-bold flex items-center gap-1">
-                                    🧑 <span class="truncate">Dipinjam: {{ $asset->activeLoan->user->name ?? '-' }}</span>
-                                </div>
-                                <div class="text-amber-600 dark:text-amber-500">s/d {{ \Carbon\Carbon::parse($asset->activeLoan->expected_return_date)->format('d M Y') }}</div>
-                                <a href="{{ route('admin.asset_loans.show', $asset->activeLoan->id) }}" class="underline font-semibold hover:text-amber-800 dark:hover:text-amber-300">Lihat Detail</a>
-                            </div>
-                            @endif
-
-                            @if(strtolower($asset->status) === 'maintenance' && $asset->activeMaintenance)
-                            <div class="mt-1.5 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-[10px] text-orange-700 dark:text-orange-400 max-w-[180px]">
-                                <div class="font-bold flex items-center gap-1">
-                                    🛠️ <span class="truncate">Teknisi: {{ $asset->activeMaintenance->technician->name ?? $asset->activeMaintenance->vendor_name ?? '-' }}</span>
-                                </div>
-                                <div class="text-orange-600 dark:text-orange-500">
-                                    Target selesai: {{ $asset->activeMaintenance->due_date ? \Carbon\Carbon::parse($asset->activeMaintenance->due_date)->format('d M Y') : '-' }}
-                                </div>
-                                <a href="{{ route('admin.asset_maintenances.show', $asset->activeMaintenance->id) }}" class="underline font-semibold hover:text-orange-800 dark:hover:text-orange-300">Lihat Detail</a>
+                            <div class="mt-1.5 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 text-[10px] text-amber-700 max-w-[160px]">
+                                <div class="font-bold truncate">🧑 {{ $asset->activeLoan->user->name ?? '-' }}</div>
+                                <a href="{{ route('admin.asset_loans.show', $asset->activeLoan->id) }}" class="underline font-semibold">Detail Pinjam</a>
                             </div>
                             @endif
                         </td>
 
-                        <!-- Action Buttons -->
+                        <!-- Action Buttons & Detail Payload -->
                         <td class="px-6 py-4 text-center">
                             @php
                             $detailPayload = [
@@ -302,20 +277,22 @@
                             "serial_number" => $asset->serial_number ?? "-",
                             "description" => $asset->description ?? "-",
                             "quantity" => $asset->quantity ?? 1,
+                            "purchase_date" => $asset->purchase_date ? \Carbon\Carbon::parse($asset->purchase_date)->format('d M Y') : "-",
                             "purchase_price" => number_format($asset->purchase_price ?? 0, 0, ",", "."),
                             "book_value" => number_format($asset->book_value ?? 0, 0, ",", "."),
                             "category" => $asset->category->name ?? $asset->accurate_category_name ?? "-",
                             "department" => $asset->department->name ?? "-",
                             "status" => strtoupper($asset->status ?? "-"),
                             "location" => $activeLocation->name ?? "-",
-                            "building" => $activeLocation->building ?? "-",
+                            "building" => $activeLocation->building ?? $asset->building_name ?? "-",
                             "floor" => $activeLocation->floor ?? "-",
-                            "room" => $activeLocation->room ?? "-",
+                            "room" => $activeLocation->room ?? $asset->room_name ?? "-",
                             "print_url" => route("admin.assets.print-qrcode", $asset->id)
                             ];
                             @endphp
 
                             <div class="flex items-center justify-center gap-1.5">
+                                <!-- Tombol Lihat Detail -->
                                 <button type="button"
                                     onclick='openDetailModal(@json($detailPayload))'
                                     title="Lihat Detail"
@@ -435,6 +412,17 @@
                         <div>
                             <span class="text-slate-400 block text-[10px] uppercase">Jumlah (Qty)</span>
                             <span id="m-qty" class="font-semibold text-slate-700 dark:text-slate-200">1</span>
+                        </div>
+                    </div>
+
+                    <!-- TAMBAHAN: Tanggal Beli -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Tanggal Beli</span>
+                            <span id="m-purchase-date" class="font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div>
+                            <!-- Kosong / bisa untuk info lain jika butuh -->
                         </div>
                     </div>
 
@@ -734,6 +722,7 @@
         document.getElementById('m-accurate').innerText = data.accurate_no;
         document.getElementById('m-serial').innerText = data.serial_number;
         document.getElementById('m-qty').innerText = data.quantity;
+        document.getElementById('m-purchase-date').innerText = data.purchase_date;
         document.getElementById('m-price').innerText = data.purchase_price;
         document.getElementById('m-bookvalue').innerText = data.book_value;
         document.getElementById('m-desc').innerText = data.description;
