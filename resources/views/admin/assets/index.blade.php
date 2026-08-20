@@ -195,11 +195,9 @@
                     @php
                     $activeLocation = $asset->transfer->toLocation ?? $asset->location;
 
-                    $qrPayload = "KODE: " . ($asset->asset_code ?? '-') . "\n" .
-                    "NAMA: " . $asset->name . "\n" .
-                    "SN: " . ($asset->serial_number ?: '-') . "\n" .
-                    "ACCURATE: " . ($asset->accurate_no ?? '-') . "\n" .
-                    "LOKASI: " . ($activeLocation->name ?? '-');
+                    // 💡 Pastikan jika qr_token kosong, fallback/generate secara aman di blade atau andalkan controller
+                    // Ubah $qrPayload yang tadinya teks biasa menjadi URL Route Dinamis
+                    $qrPayload = route('assets.public-preview', $asset->qr_token);
                     @endphp
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors align-middle">
                         <td class="px-4 py-4 text-center">
@@ -271,6 +269,7 @@
                             @php
                             $detailPayload = [
                             "id" => $asset->id,
+                            "qr_token" => $asset->qr_token,
                             "name" => $asset->name,
                             "asset_code" => $asset->asset_code ?? "-",
                             "accurate_no" => $asset->accurate_no ?? "-",

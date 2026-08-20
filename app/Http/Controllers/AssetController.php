@@ -8,8 +8,8 @@ use App\Models\AssetTransfer;
 use App\Models\AssetCategory;
 use App\Models\Department;
 use App\Services\AssetSyncService;
-use App\Jobs\SyncAllAssetsJob;        
-use App\Jobs\SyncAssetFromAccurateJob; 
+use App\Jobs\SyncAllAssetsJob;
+use App\Jobs\SyncAssetFromAccurateJob;
 use Illuminate\Support\Facades\Log;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
@@ -40,7 +40,7 @@ class AssetController extends Controller
 
         foreach ($mapping as $keyword => $prefix) {
             if (str_contains($cleanedName, $keyword)) {
-                return $prefix; 
+                return $prefix;
             }
         }
 
@@ -368,11 +368,12 @@ class AssetController extends Controller
 
     public function publicPreview($qr_token)
     {
-        $asset = Asset::with(['category', 'location'])
+        $asset = Asset::with(['category', 'location', 'department', 'user', 'activeLoan.user', 'activeMaintenance.technician'])
             ->where('qr_token', $qr_token)
             ->firstOrFail();
 
-        return view('admin.assets.print-qrcode', compact('asset'));
+        // ✅ Ganti ke view detail/preview aset yang sesuai
+        return view('admin.assets.public-preview', compact('asset'));
     }
 
     public function exportExcel(Request $request)
@@ -508,7 +509,7 @@ class AssetController extends Controller
         try {
             // Jalankan via Queue Job mass sync di background
             SyncAllAssetsJob::dispatch();
-            
+
             return back()->with('success', 'Proses sync seluruh data dari Accurate sedang berjalan di latar belakang!');
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan saat menjadwalkan sync massal: ' . $e->getMessage());
