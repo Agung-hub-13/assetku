@@ -95,37 +95,51 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
 
             <!-- Cari Aset -->
-            <div class="lg:col-span-3 space-y-1.5">
+            <div class="lg:col-span-2 space-y-1.5">
                 <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Cari Aset</label>
                 <div class="relative">
                     <input type="text" name="search" value="{{ request('search') }}"
                         class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none"
-                        placeholder="Nama aset, kode, serial...">
+                        placeholder="Nama aset, kode...">
                 </div>
             </div>
 
-            <!-- Kategori -->
-            <div class="lg:col-span-2 space-y-1.5">
+            <!-- Kategori (Lebar ditambah jadi col-span-3) -->
+            <div class="lg:col-span-3 space-y-1.5">
                 <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
-                <select name="category_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                <select name="category_id" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
                     <option value="">Semua Kategori</option>
                     @foreach($categories ?? [] as $category)
+                    @if(!is_null($category->parent_id))
                     <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
                         {{ strtoupper($category->name) }}
                     </option>
+                    @endif
                     @endforeach
                 </select>
             </div>
 
-            <!-- Lokasi -->
-            <div class="lg:col-span-2 space-y-1.5">
+            <!-- Lokasi (Lebar ditambah jadi col-span-3) -->
+            <div class="lg:col-span-3 space-y-1.5">
                 <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Lokasi</label>
-                <select name="room_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
+                <select name="room_id" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-all outline-none">
                     <option value="">Semua Lokasi</option>
-                    @foreach($locations ?? [] as $loc)
-                    <option value="{{ $loc->id }}" {{ request('room_id') == $loc->id ? 'selected' : '' }}>
-                        {{ $loc->name }} {{ $loc->parent ? '('.$loc->parent->name.')' : '' }}
-                    </option>
+                    @foreach(($locations ?? [])->groupBy('name') as $groupName => $groupLocations)
+                    <optgroup label="{{ $groupName }}">
+                        @foreach($groupLocations as $loc)
+                        @php
+                        $details = [];
+                        if($loc->building && $loc->building !== '-') $details[] = 'Gedung ' . $loc->building;
+                        if($loc->floor && $loc->floor !== '-') $details[] = 'Lantai ' . $loc->floor;
+                        if($loc->room && $loc->room !== '-') $details[] = 'Ruang ' . $loc->room;
+
+                        $formattedDetail = count($details) > 0 ? implode(' — ', $details) : 'Area Utama';
+                        @endphp
+                        <option value="{{ $loc->id }}" {{ request('room_id') == $loc->id ? 'selected' : '' }}>
+                            {{ $formattedDetail }}
+                        </option>
+                        @endforeach
+                    </optgroup>
                     @endforeach
                 </select>
             </div>
@@ -142,8 +156,8 @@
             </div>
 
             <!-- Tombol Aksi (Filter & Reset) -->
-            <div class="lg:col-span-3 flex items-center gap-2">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all shadow-sm hover:shadow-blue-500/20 active:scale-95 text-center flex items-center justify-center gap-1.5">
+            <div class="lg:col-span-2 flex items-center gap-2">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs sm:text-sm transition-all shadow-sm hover:shadow-blue-500/20 active:scale-95 text-center flex items-center justify-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                     </svg>
@@ -151,7 +165,7 @@
                 </button>
 
                 @if(request()->anyFilled(['search', 'category_id', 'room_id', 'status']))
-                <a href="{{ request()->url() }}" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition-all active:scale-95 text-center flex items-center justify-center">
+                <a href="{{ request()->url() }}" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold py-2.5 px-3 rounded-xl text-xs sm:text-sm transition-all active:scale-95 text-center flex items-center justify-center">
                     Reset
                 </a>
                 @endif
@@ -530,13 +544,14 @@
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
+                            <div class="mb-4">
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Kategori</label>
-                                <!-- Ditambahkan class searchable-select -->
                                 <select name="category_id" id="a_category" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                                     <option value="">-- Pilih Kategori --</option>
                                     @foreach($categories ?? [] as $category)
+                                    @if(!is_null($category->parent_id))
                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endif
                                     @endforeach
                                 </select>
                             </div>
@@ -569,8 +584,20 @@
                             <select name="location_id" id="a_location" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                                 <option value="">-- Pilih Lokasi --</option>
                                 @foreach($locations ?? [] as $location)
-                                <option value="{{ $location->id }}">
-                                    {{ $location->name }} ({{ $location->building ?? '-' }} - {{ $location->floor ?? '-' }} - {{ $location->room ?? '-' }})
+                                @php
+                                $meta = [];
+                                if($location->building && $location->building !== '-') $meta[] = "Area: {$location->building}";
+                                if($location->floor && $location->floor !== '-') $meta[] = "Lantai: {$location->floor}";
+                                if($location->room && $location->room !== '-') $meta[] = "Ruangan: {$location->room}";
+
+                                // Mengecek nilai dari old() atau dari data edit (misal: $asset->location_id)
+                                $selectedId = old('location_id', $asset->location_id ?? '');
+                                @endphp
+                                <option value="{{ $location->id }}" {{ $selectedId == $location->id ? 'selected' : '' }}>
+                                    {{ $location->name }}
+                                    @if(count($meta) > 0)
+                                    — {{ implode(' | ', $meta) }}
+                                    @endif
                                 </option>
                                 @endforeach
                             </select>
@@ -637,7 +664,9 @@
                     <select name="category_id" id="bulk_category_id" class="searchable-select w-full">
                         <option value="">-- Pilih Kategori --</option>
                         @foreach($categories ?? [] as $category)
+                        @if(!is_null($category->parent_id))
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endif
                         @endforeach
                     </select>
                 </div>
@@ -654,10 +683,21 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Lokasi Aset</label>
-                    <select name="location_id" id="bulk_location_id" class="searchable-select w-full">
+                    <select name="location_id" id="a_location" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                         <option value="">-- Pilih Lokasi --</option>
                         @foreach($locations ?? [] as $location)
-                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                        <option value="{{ $location->id }}" {{ old('location_id') == $location->id ? 'selected' : '' }}>
+                            {{ $location->name }}
+                            @php
+                            $meta = [];
+                            if($location->building && $location->building !== '-') $meta[] = "Area: {$location->building}";
+                            if($location->floor && $location->floor !== '-') $meta[] = "Lantai: {$location->floor}";
+                            if($location->room && $location->room !== '-') $meta[] = "Ruangan: {$location->room}";
+                            @endphp
+                            @if(count($meta) > 0)
+                            — {{ implode(' | ', $meta) }}
+                            @endif
+                        </option>
                         @endforeach
                     </select>
                 </div>

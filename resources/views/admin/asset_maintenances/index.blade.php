@@ -377,16 +377,26 @@
                 <div class="p-6 sm:p-8 space-y-5 overflow-y-auto flex-1">
 
                     <!-- Pilih Aset -->
-                    <div class="space-y-1.5">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pilih Aset <span class="text-rose-500">*</span></label>
-                        <select name="asset_id" id="inputAssetId" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs transition-all outline-none">
-                            <option value="">-- Pilih Aset --</option>
-                            @foreach($assets as $asset)
-                            <option value="{{ $asset->id }}">{{ $asset->name }} ({{ $asset->code ?? 'No Code' }})</option>
-                            @endforeach
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Asset *</label>
+                        <select name="asset_id" id="searchable-asset" required class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-medium text-slate-700 dark:text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            <option value="" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">-- Pilih & Cari Asset --</option>
+                            @forelse($assets ?? [] as $asset)
+                            @php
+                            $code = $asset->asset_code ?? $asset->code ?? '-';
+                            $serial = $asset->serial_number ? ' | SN: ' . $asset->serial_number : '';
+                            $brand = $asset->brand ? ' (' . $asset->brand . ')' : '';
+                            $status = $asset->status ? ' — Status: ' . ucfirst($asset->status) : '';
+                            @endphp
+                            <option value="{{ $asset->id }}" {{ (old('asset_id') == $asset->id || (isset($maintenance) && $maintenance->asset_id == $asset->id)) ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                {{ $asset->name }}{{ $brand }} — [{{ $code }}]{{ $serial }}{{ $status }}
+                            </option>
+                            @empty
+                            <option value="" disabled class="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500">-- Tidak ada aset yang tersedia --</option>
+                            @endforelse
                         </select>
                     </div>
-
+                    
                     <!-- Tipe, Prioritas & Status -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="space-y-1.5">

@@ -16,17 +16,28 @@ class AssetLocationController extends Controller
 {
     public function index(Request $request): View
     {
-        // Tanpa eager loading parent, department, atau children karena berdiri sendiri
+        // Mengambil daftar nama lokasi unik untuk pilihan dropdown filter (case-insensitive)
+        $filterLocations = AssetLocation::select('name')
+            ->distinct()
+            ->orderBy('name', 'asc')
+            ->pluck('name');
+
         $query = AssetLocation::query();
 
-        // Fitur Pencarian Data
+        // Fitur Pencarian Data (Case-Insensitive untuk huruf besar/kecil acak)
         if ($request->filled('search')) {
-            $search = trim($request->search);
+            $search = strtolower(trim($request->search));
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%")
-                    ->orWhere('building', 'like', "%{$search}%");
+                $q->whereRaw('LOWER(name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(code) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(building) like ?', ["%{$search}%"]);
             });
+        }
+
+        // Filter Dropdown Nama Lokasi (Case-Insensitive)
+        if ($request->filled('location_name')) {
+            $locationName = strtolower(trim($request->location_name));
+            $query->whereRaw('LOWER(name) = ?', [$locationName]);
         }
 
         // Filter Status
@@ -36,7 +47,7 @@ class AssetLocationController extends Controller
 
         $locations = $query->latest()->paginate(10)->withQueryString();
 
-        return view('admin.asset_locations.index', compact('locations'));
+        return view('admin.asset_locations.index', compact('locations', 'filterLocations'));
     }
 
     public function create(): View

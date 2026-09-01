@@ -15,12 +15,12 @@ class AssetCategoryController extends Controller
     {
         $query = AssetCategory::with(['parent', 'children']);
 
-        // Fitur pencarian berdasarkan nama atau code_prefix
+        // Fitur pencarian berdasarkan nama atau code_prefix (Case-Insensitive untuk huruf besar/kecil acak)
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = strtolower(trim($request->search));
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code_prefix', 'like', "%{$search}%");
+                $q->whereRaw('LOWER(name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(code_prefix) like ?', ["%{$search}%"]);
             });
         }
 

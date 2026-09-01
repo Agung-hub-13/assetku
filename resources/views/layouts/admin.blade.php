@@ -189,6 +189,17 @@
             border-color: rgb(148 163 184) transparent transparent transparent !important;
             right: 16px;
         }
+
+        /* Memperlebar kotak dropdown bawaan library agar teks panjang tidak terpotong */
+        .choices__list--dropdown {
+            min-width: 320px !important;
+            white-space: normal !important;
+        }
+
+        .choices__item {
+            white-space: normal !important;
+            word-break: break-word;
+        }
     </style>
 </head>
 

@@ -20,12 +20,14 @@ class AssetMaintenanceController extends Controller
         $query = AssetMaintenance::with(['asset', 'technician', 'reporter']);
 
         if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('ticket_number', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%")
-                    ->orWhereHas('asset', function ($aq) use ($search) {
-                        $aq->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
+            $searchLower = '%' . strtolower($search) . '%';
+            $query->where(function ($q) use ($searchLower) {
+                $q->whereRaw('LOWER(ticket_number) LIKE ?', [$searchLower])
+                    ->orWhereRaw('LOWER(title) LIKE ?', [$searchLower])
+                    ->orWhereHas('asset', function ($aq) use ($searchLower) {
+                        // Sesuaikan 'asset_code' jika kolom di database Anda berbeda (misal: 'code', 'item_code', dll)
+                        $aq->whereRaw('LOWER(name) LIKE ?', [$searchLower])
+                            ->orWhereRaw('LOWER(asset_code) LIKE ?', [$searchLower]);
                     });
             });
         }

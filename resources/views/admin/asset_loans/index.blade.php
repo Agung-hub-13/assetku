@@ -46,6 +46,49 @@
             @endcan
         </div>
 
+        <!-- Filter & Search Bar Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-4 mb-6">
+            <form method="GET" action="{{ route('admin.asset_loans.index') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
+                <!-- Search Keyword -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari No. Pinjam / Asset / Peminjam..." class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Filter Status -->
+                <div>
+                    <select name="status" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Semua Status --</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="borrowed" {{ request('status') == 'borrowed' ? 'selected' : '' }}>Borrowed</option>
+                        <option value="returned" {{ request('status') == 'returned' ? 'selected' : '' }}>Returned</option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        <option value="overdue" {{ request('status') == 'overdue' ? 'selected' : '' }}>Overdue</option>
+                    </select>
+                </div>
+
+                <!-- Filter Tanggal (Opsional) -->
+                <div>
+                    <input type="date" name="date" value="{{ request('date') }}" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Tombol Aksi Filter -->
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold transition-all">
+                        Filter
+                    </button>
+                    @if(request('search') || request('status') || request('date'))
+                    <a href="{{ route('admin.asset_loans.index') }}" class="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-semibold transition-all" title="Reset Filter">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+
         <!-- Table Container -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
@@ -97,13 +140,13 @@
                             <td class="px-6 py-4 capitalize text-slate-600 dark:text-slate-300">
                                 @php
                                 $formatCond = function($cond) {
-                                    return match($cond) {
-                                        'minor_damage' => 'Rusak Ringan',
-                                        'heavy_damage' => 'Rusak Berat',
-                                        'lost' => 'Hilang',
-                                        'good' => 'Baik',
-                                        default => '-'
-                                    };
+                                return match($cond) {
+                                'minor_damage' => 'Rusak Ringan',
+                                'heavy_damage' => 'Rusak Berat',
+                                'lost' => 'Hilang',
+                                'good' => 'Baik',
+                                default => '-'
+                                };
                                 };
                                 @endphp
                                 <div class="space-y-0.5">
@@ -116,12 +159,12 @@
                             <td class="px-6 py-4">
                                 @php
                                 $badgeClass = match($displayStatus) {
-                                    'approved' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-                                    'borrowed' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
-                                    'returned' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-                                    'rejected' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-                                    'overdue' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 animate-pulse font-extrabold',
-                                    default => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+                                'approved' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+                                'borrowed' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+                                'returned' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+                                'rejected' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+                                'overdue' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 animate-pulse font-extrabold',
+                                default => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
                                 };
                                 @endphp
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border {{ $badgeClass }}">
@@ -319,22 +362,39 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Lokasi Peminjaman</label>
-                        <select name="location_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-medium text-slate-700 dark:text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">-- Pilih Lokasi --</option>
+                        <select name="location_id" id="searchable-location" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-medium text-slate-700 dark:text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            <option value="" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">-- Pilih & Cari Lokasi --</option>
                             @foreach($locations ?? [] as $location)
+                            @php
+                            $details = [];
+                            if($location->building && $location->building !== '-') $details[] = 'Gedung ' . $location->building;
+                            if($location->floor && $location->floor !== '-') $details[] = 'Lantai ' . $location->floor;
+                            if($location->room && $location->room !== '-') $details[] = 'Ruang ' . $location->room;
+                            if($location->lantai && $location->lantai !== '-') $details[] = 'Lantai ' . $location->lantai;
+
+                            $formattedDetail = count($details) > 0 ? ' — ' . implode(' | ', $details) : '';
+                            $codeText = $location->code ? '[' . $location->code . '] ' : '';
+                            @endphp
                             <option value="{{ $location->id }}" {{ old('location_id') == $location->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
-                                {{ $location->code ? '[' . $location->code . '] ' : '' }}{{ $location->name }}
+                                {{ $codeText }}{{ $location->name }}{{ $formattedDetail }}
                             </option>
                             @endforeach
                         </select>
                     </div>
+
                     <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Asset</label>
-                        <select name="asset_id" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-medium text-slate-700 dark:text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">-- Pilih Asset --</option>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Asset *</label>
+                        <select name="asset_id" id="searchable-asset" required class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl font-medium text-slate-700 dark:text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                            <option value="" class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">-- Pilih & Cari Asset --</option>
                             @forelse($assets ?? [] as $asset)
+                            @php
+                            $code = $asset->asset_code ?? $asset->code ?? '-';
+                            $serial = $asset->serial_number ? ' | SN: ' . $asset->serial_number : '';
+                            $brand = $asset->brand ? ' (' . $asset->brand . ')' : '';
+                            $status = $asset->status ? ' — Status: ' . ucfirst($asset->status) : '';
+                            @endphp
                             <option value="{{ $asset->id }}" {{ old('asset_id') == $asset->id ? 'selected' : '' }} class="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
-                                {{ Str::limit($asset->name, 25) }} ({{ $asset->code }}) - {{ ucfirst($asset->status) }}
+                                {{ $asset->name }}{{ $brand }} — [{{ $code }}]{{ $serial }}{{ $status }}
                             </option>
                             @empty
                             <option value="" disabled class="bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500">-- Tidak ada aset yang tersedia --</option>
@@ -704,6 +764,32 @@
 
             openModal('modalDetail');
         }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Choices !== 'undefined') {
+                // Inisialisasi Search untuk Lokasi
+                const locElement = document.getElementById('searchable-location');
+                if (locElement) {
+                    new Choices(locElement, {
+                        searchEnabled: true,
+                        itemSelectText: '',
+                        shouldSort: false,
+                    });
+                }
+
+                // Inisialisasi Search untuk Asset
+                const assetElement = document.getElementById('searchable-asset');
+                if (assetElement) {
+                    new Choices(assetElement, {
+                        searchEnabled: true,
+                        itemSelectText: '',
+                        shouldSort: false,
+                    });
+                }
+            }
+        });
     </script>
 
     @if ($errors->any())

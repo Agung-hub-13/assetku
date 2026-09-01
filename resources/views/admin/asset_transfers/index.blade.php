@@ -416,46 +416,19 @@
                 {{-- Pilih Aset --}}
                 <div class="relative">
                     <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Aset Yang Dimutasi *</label>
-                    <input type="hidden" name="asset_id" id="form-asset_id" required>
-
-                    <div class="relative">
-                        <input type="text" id="asset-search-input" readonly placeholder="-- Pilih & Cari Aset --"
-                            class="w-full text-xs rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500 bg-white p-2 border cursor-pointer pr-8"
-                            onclick="toggleAssetDropdown()">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div id="asset-dropdown-list" class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div class="p-2 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800">
-                            <input type="text" id="asset-inner-search" placeholder="Ketik nama atau kode aset..."
-                                class="w-full text-xs rounded border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500 p-1.5 border"
-                                oninput="filterAssetList()">
-                        </div>
-                        <div id="asset-options-container" class="max-h-48 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
-                            <div class="px-3 py-2 text-xs text-slate-400 italic" id="no-asset-found" style="display: none;">Aset tidak ditemukan...</div>
-
-                            @foreach($assets as $asset)
-                            @php
-                            $displayName = $asset->name . ($asset->asset_code ? ' ['.$asset->asset_code.']' : '');
-                            @endphp
-                            <button type="button"
-                                class="asset-option-item w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors flex justify-between items-center"
-                                data-id="{{ $asset->id }}"
-                                data-name="{{ $asset->name }}"
-                                data-search="{{ strtolower($asset->name . ' ' . ($asset->asset_code ?? '')) }}"
-                                onclick="selectAsset('{{ $asset->id }}', '{{ $displayName }}')">
-                                <span class="font-medium truncate max-w-[200px] sm:max-w-xs">{{ $asset->name }}</span>
-                                <span class="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono shrink-0 ml-2">
-                                    {{ $asset->asset_code ?? '-' }}
-                                </span>
-                            </button>
-                            @endforeach
-                        </div>
-                    </div>
+                    <select name="asset_id" id="form-asset_id" class="w-full text-xs rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 bg-white p-2 border" required>
+                        <option value="">-- Pilih & Cari Aset (Nama / Kode / SN) --</option>
+                        @foreach($assets as $asset)
+                        @php
+                        $code = $asset->asset_code ?? $asset->code ?? '-';
+                        $serial = $asset->serial_number ? ' | SN: ' . $asset->serial_number : '';
+                        $brand = $asset->brand ? ' (' . $asset->brand . ')' : '';
+                        @endphp
+                        <option value="{{ $asset->id }}">
+                            {{ $asset->name }}{{ $brand }} — [{{ $code }}]{{ $serial }}
+                        </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -478,10 +451,24 @@
                 {{-- Lokasi Tujuan --}}
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Lokasi Tujuan *</label>
-                    <select name="to_location_id" id="form-to_location_id" class="w-full text-xs rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500 bg-white p-2 border">
+                    <select name="to_location_id" id="form-to_location_id" class="searchable-select w-full text-xs rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500 bg-white p-2 border">
                         <option value="">-- Pilih Lokasi Target --</option>
-                        @foreach($locations as $loc)
-                        <option value="{{ $loc->id }}">{{ $loc->name }} @if($loc->department_name) [Dept: {{ $loc->department_name }}] @endif</option>
+                        @foreach(($locations ?? [])->groupBy('name') as $groupName => $groupLocations)
+                        <optgroup label="{{ $groupName }}">
+                            @foreach($groupLocations as $loc)
+                            @php
+                            $details = [];
+                            if($loc->building && $loc->building !== '-') $details[] = 'Gedung ' . $loc->building;
+                            if($loc->floor && $loc->floor !== '-') $details[] = 'Lantai ' . $loc->floor;
+                            if($loc->room && $loc->room !== '-') $details[] = 'Ruang ' . $loc->room;
+
+                            $formattedDetail = count($details) > 0 ? implode(' — ', $details) : 'Area Utama';
+                            @endphp
+                            <option value="{{ $loc->id }}" {{ (isset($selectedLocationId) ? $selectedLocationId : request('to_location_id')) == $loc->id ? 'selected' : '' }}>
+                                {{ $loc->name }} — {{ $formattedDetail }}
+                            </option>
+                            @endforeach
+                        </optgroup>
                         @endforeach
                     </select>
                 </div>
@@ -546,59 +533,38 @@
 </div>
 
 <script>
+    // Variabel Global untuk Instance Choices.js
+    let assetChoicesInstance = null;
+    let locationChoicesInstance = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi Choices.js untuk Aset
+        const assetElement = document.getElementById('form-asset_id');
+        if (assetElement && typeof Choices !== 'undefined') {
+            assetChoicesInstance = new Choices(assetElement, {
+                searchEnabled: true,
+                itemSelectText: '',
+                shouldSort: false,
+                placeholder: true,
+                placeholderValue: '-- Pilih & Cari Aset --'
+            });
+        }
+
+        // Inisialisasi Choices.js untuk Lokasi Tujuan
+        const locationElement = document.getElementById('form-to_location_id');
+        if (locationElement && typeof Choices !== 'undefined') {
+            locationChoicesInstance = new Choices(locationElement, {
+                searchEnabled: true,
+                itemSelectText: '',
+                shouldSort: false,
+            });
+        }
+    });
+
     const modal = document.getElementById('modal-transfer');
     const form = document.getElementById('transfer-form');
     const modalTitle = document.getElementById('modal-title');
     const methodContainer = document.getElementById('method-container');
-
-    // Element Dropdown Aset Custom
-    const assetSearchInput = document.getElementById('asset-search-input');
-    const assetDropdownList = document.getElementById('asset-dropdown-list');
-    const assetInnerSearch = document.getElementById('asset-inner-search');
-    const hiddenAssetId = document.getElementById('form-asset_id');
-    const assetOptions = document.querySelectorAll('.asset-option-item');
-    const noAssetFound = document.getElementById('no-asset-found');
-
-    // 1. Toggle Buka/Tutup Dropdown Aset
-    function toggleAssetDropdown() {
-        assetDropdownList.classList.toggle('hidden');
-        if (!assetDropdownList.classList.contains('hidden')) {
-            assetInnerSearch.focus();
-        }
-    }
-
-    // Fungsi pencarian/filter di dalam dropdown custom
-    function filterAssetList() {
-        const input = assetInnerSearch.value.toLowerCase();
-        let anyFound = false;
-
-        assetOptions.forEach(item => {
-            const searchString = item.getAttribute('data-search');
-            if (searchString.includes(input)) {
-                item.style.display = 'flex';
-                anyFound = true;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-
-        noAssetFound.style.display = anyFound ? 'none' : 'block';
-    }
-
-    // Fungsi ketika salah satu aset dipilih
-    function selectAsset(id, displayName) {
-        hiddenAssetId.value = id;
-        assetSearchInput.value = displayName;
-        assetDropdownList.classList.add('hidden');
-    }
-
-    // Menutup dropdown otomatis jika klik di luar area custom select dropdown
-    document.addEventListener('click', function(event) {
-        const isClickInside = event.target.closest('.relative');
-        if (!isClickInside) {
-            assetDropdownList.classList.add('hidden');
-        }
-    });
 
     // === LOGIKA UTAMA MODAL CRUD ===
 
@@ -610,11 +576,13 @@
         form.reset();
         document.getElementById('form-transfer_date').value = "{{ date('Y-m-d') }}";
 
-        // Reset Custom Dropdown Aset
-        hiddenAssetId.value = "";
-        assetSearchInput.value = "";
-        assetInnerSearch.value = "";
-        filterAssetList();
+        // Reset pilihan di Choices.js Aset & Lokasi
+        if (assetChoicesInstance) {
+            assetChoicesInstance.setChoiceByValue("");
+        }
+        if (locationChoicesInstance) {
+            locationChoicesInstance.setChoiceByValue("");
+        }
 
         modal.classList.remove('hidden');
     }
@@ -627,30 +595,26 @@
         // Mapping ke input text biasa
         document.getElementById('form-transfer_type').value = data.transfer_type;
         document.getElementById('form-transfer_date').value = data.transfer_date.split('T')[0];
-        document.getElementById('form-to_location_id').value = data.to_location_id;
         document.getElementById('form-reason').value = data.reason || '';
         document.getElementById('form-notes').value = data.notes || '';
 
-        // Mapping Khusus untuk Searchable Dropdown Aset
-        hiddenAssetId.value = data.asset_id;
-
-        // Cari text nama aset berdasarkan asset_id yang dikirim untuk ditampilkan di display box
-        const selectedAssetOption = Array.from(assetOptions).find(opt => opt.getAttribute('data-id') == data.asset_id);
-        if (selectedAssetOption) {
-            assetSearchInput.value = selectedAssetOption.getAttribute('data-name');
+        // Set value lokasi menggunakan Choices.js agar UI ikut terupdate
+        if (locationChoicesInstance) {
+            locationChoicesInstance.setChoiceByValue(String(data.to_location_id));
         } else {
-            assetSearchInput.value = "-- Aset Tidak Ditemukan --";
+            document.getElementById('form-to_location_id').value = data.to_location_id;
         }
 
-        assetInnerSearch.value = "";
-        filterAssetList();
+        // Set value aset menggunakan Choices.js
+        if (assetChoicesInstance) {
+            assetChoicesInstance.setChoiceByValue(String(data.asset_id));
+        }
 
         modal.classList.remove('hidden');
     }
 
     function closeModal() {
         modal.classList.add('hidden');
-        assetDropdownList.classList.add('hidden');
     }
 </script>
 
@@ -658,7 +622,7 @@
 <script>
     // Otomatis buka modal saat validasi server gagal
     document.addEventListener('DOMContentLoaded', function() {
-        openModal('create');
+        openCreateModal();
     });
 </script>
 @endif

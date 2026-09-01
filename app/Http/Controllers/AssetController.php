@@ -125,8 +125,10 @@ class AssetController extends Controller
             ->paginate(50)
             ->appends($request->all());
 
-        // 6. Data Master untuk Options
+        // 6. Data Master untuk Options (Tanpa parent_id)
         $locations = AssetLocation::select('id', 'name', 'building', 'floor', 'room')
+            ->orderBy('building')
+            ->orderBy('floor')
             ->orderBy('name')
             ->get();
 
@@ -140,7 +142,9 @@ class AssetController extends Controller
             ->take(5)
             ->get();
 
-        $categories = AssetCategory::select('id', 'name', 'code_prefix')->get();
+        $categories = AssetCategory::select('id', 'name', 'code_prefix', 'parent_id')
+            ->whereNotNull('parent_id')
+            ->get();
 
         $departments = Department::select('id', 'name')->orderBy('name')->get();
 

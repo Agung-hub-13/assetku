@@ -20,22 +20,46 @@ class AssetLoanController extends Controller
     /**
      * Menampilkan daftar peminjaman aset[cite: 4]
      */
-    public function index(Request $request)
+public function index(Request $request)
     {
         Log::info('[AssetLoanController@index] Akses halaman index peminjaman', [
             'user_id' => auth()->id(),
-            'filter_status' => $request->query('status', 'ALL')
+            'filter_status' => $request->query('status', 'ALL'),
+            'filter_search' => $request->query('search'),
+            'filter_date' => $request->query('date')
         ]);
 
         try {
             $query = AssetLoan::with(['asset', 'location', 'user', 'creator', 'approver', 'department'])
                 ->latest();
 
+            // Filter Status
             if ($request->filled('status')) {
                 $query->whereRaw('LOWER(status) = ?', [strtolower($request->status)]);
             }
 
-            $loans = $query->paginate(10);
+            // Filter Search (No. Pinjam / Asset / Peminjam)
+            if ($request->filled('search')) {
+                $search = '%' . strtolower($request->search) . '%';
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(loan_number) LIKE ?', [$search])
+                      ->orWhereHas('asset', function ($assetQuery) use ($search) {
+                          // Ganti 'name' dan 'asset_code' sesuai kolom yang ada di tabel assets Anda (misal: 'name' atau 'item_code')
+                          $assetQuery->whereRaw('LOWER(name) LIKE ?', [$search])
+                                     ->orWhereRaw('LOWER(asset_code) LIKE ?', [$search]);
+                      })
+                      ->orWhereHas('user', function ($userQuery) use ($search) {
+                          $userQuery->whereRaw('LOWER(name) LIKE ?', [$search]);
+                      });
+                });
+            }
+
+            // Filter Date
+            if ($request->filled('date')) {
+                $query->whereDate('created_at', $request->date);
+            }
+
+            $loans = $query->paginate(10)->withQueryString();
             $locations = AssetLocation::where('status', 'active')->get();
 
             // BATASI pengambilan aset agar tidak meload belasan ribu data sekaligus ke RAM
