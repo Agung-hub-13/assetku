@@ -209,9 +209,10 @@
                     @php
                     $activeLocation = $asset->transfer->toLocation ?? $asset->location;
 
-                    // 💡 Pastikan jika qr_token kosong, fallback/generate secara aman di blade atau andalkan controller
-                    // Ubah $qrPayload yang tadinya teks biasa menjadi URL Route Dinamis
-                    $qrPayload = route('assets.public-preview', $asset->qr_token);
+                    // Perbaiki pemanggilan route dengan menyertakan array parameter qr_token
+                    $qrPayload = $asset->qr_token
+                    ? route('assets.public-preview', ['qr_token' => $asset->qr_token])
+                    : '#';
                     @endphp
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors align-middle">
                         <td class="px-4 py-4 text-center">
@@ -652,16 +653,17 @@
     <div class="flex min-h-full items-center justify-center p-4">
         <div class="relative bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl transition-all">
             <h2 class="text-lg sm:text-xl font-bold mb-4 text-slate-800 dark:text-white">
-                Bulk Assign Lokasi & Kategori
+                Bulk Assign Lokasi, Kategori, User & Status
             </h2>
 
             <form method="POST" action="{{ route('admin.assets.bulkAssign') }}" class="space-y-4">
                 @csrf
                 <input type="hidden" id="bulk_asset_ids" name="asset_ids">
 
+                <!-- Kategori Aset -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Kategori Aset</label>
-                    <select name="category_id" id="bulk_category_id" class="searchable-select w-full">
+                    <select name="category_id" id="bulk_category_id" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                         <option value="">-- Pilih Kategori --</option>
                         @foreach($categories ?? [] as $category)
                         @if(!is_null($category->parent_id))
@@ -671,9 +673,10 @@
                     </select>
                 </div>
 
+                <!-- Departemen -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Departemen</label>
-                    <select name="department_id" id="bulk_department_id" class="searchable-select w-full">
+                    <select name="department_id" id="bulk_department_id" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                         <option value="">-- Pilih Departemen --</option>
                         @foreach($departments ?? [] as $dept)
                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -681,9 +684,10 @@
                     </select>
                 </div>
 
+                <!-- Lokasi Aset -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Lokasi Aset</label>
-                    <select name="location_id" id="a_location" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                    <select name="location_id" id="bulk_location_id" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                         <option value="">-- Pilih Lokasi --</option>
                         @foreach($locations ?? [] as $location)
                         <option value="{{ $location->id }}" {{ old('location_id') == $location->id ? 'selected' : '' }}>
@@ -699,6 +703,30 @@
                             @endif
                         </option>
                         @endforeach
+                    </select>
+                </div>
+
+                <!-- User -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">User</label>
+                    <select name="user_id" id="bulk_user_id" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                        <option value="">-- Pilih User --</option>
+                        @foreach($users ?? [] as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Status Aset -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Status Aset <span class="text-rose-500">*</span></label>
+                    <select name="status" id="bulk_status" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                        <option value="">-- Pilih Status --</option>
+                        <option value="draft">Draft</option>
+                        <option value="active">Active</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="disposed">Disposed</option>
+                        <option value="lost">Lost</option>
                     </select>
                 </div>
 

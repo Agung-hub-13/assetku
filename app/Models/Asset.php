@@ -183,6 +183,13 @@ class Asset extends Model
 
     protected static function booted()
     {
+        // Tambahkan event ini agar otomatis generate qr_token saat data baru dibuat
+        static::creating(function ($asset) {
+            if (empty($asset->qr_token)) {
+                $asset->qr_token = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+
         static::created(function ($asset) {
             AssetLogController::log(
                 $asset->id,

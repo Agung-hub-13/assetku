@@ -187,6 +187,8 @@
                 {{-- Action Buttons Mobile --}}
                 <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-700/40">
                     @if($transfer->status === 'draft')
+                    {{-- Tombol Khusus Draft (Approve, Reject, Edit, Delete) --}}
+                    @can('asset-transfers.approve')
                     <form action="{{ route('admin.asset_transfers.approve', $transfer->id) }}" method="POST" onsubmit="return confirm('Setujui mutasi ini?')">
                         @csrf
                         <button type="submit" class="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg" title="Approve">
@@ -204,13 +206,17 @@
                             </svg>
                         </button>
                     </form>
+                    @endcan
 
+                    @can('asset-transfers.edit')
                     <button onclick="openEditModal({{ json_encode($transfer) }})" class="p-2 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg" title="Edit">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
+                    @endcan
 
+                    @can('asset-transfers.delete')
                     <form action="{{ route('admin.asset_transfers.destroy', $transfer->id) }}" method="POST" onsubmit="return confirm('Hapus draft mutasi ini?')">
                         @csrf
                         @method('DELETE')
@@ -220,7 +226,20 @@
                             </svg>
                         </button>
                     </form>
+                    @endcan
+
+                    @elseif($transfer->status === 'completed' || $transfer->status === 'rejected')
+                    {{-- Tombol View Detail untuk Status Completed atau Rejected --}}
+                    <button onclick="openDetailModal({{ json_encode($transfer->load(['asset', 'fromLocation', 'toLocation', 'toDepartment', 'toUser'])) }})" class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-1.5 text-xs font-medium" title="Lihat Detail">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        <span>Detail</span>
+                    </button>
                     @else
+
+                    {{-- Status Lain (misal: rejected) --}}
                     <span class="text-xs text-slate-400 italic">No Action</span>
                     @endif
                 </div>
@@ -327,12 +346,10 @@
                             </td>
 
                             {{-- Aksi --}}
-                            @canany(['asset-transfers.approve', 'asset-transfers.edit', 'asset-transfers.delete'])
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-2">
                                     @if($transfer->status === 'draft')
-
-                                    {{-- Button Approve --}}
+                                    {{-- Button Approve & Reject (Memerlukan izin approve) --}}
                                     @can('asset-transfers.approve')
                                     <form action="{{ route('admin.asset_transfers.approve', $transfer->id) }}" method="POST" onsubmit="return confirm('Setujui mutasi ini?')">
                                         @csrf
@@ -343,7 +360,6 @@
                                         </button>
                                     </form>
 
-                                    {{-- Button Reject --}}
                                     <form action="{{ route('admin.asset_transfers.reject', $transfer->id) }}" method="POST" onsubmit="return confirm('Tolak mutasi ini?')">
                                         @csrf
                                         <button type="submit" class="p-1.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 rounded transition-all" title="Reject">
@@ -376,12 +392,20 @@
                                     </form>
                                     @endcan
 
+                                    @elseif($transfer->status === 'completed' || $transfer->status === 'rejected')
+                                    {{-- Tombol View Detail untuk Status Completed atau Rejected --}}
+                                    <button onclick="openDetailModal({{ json_encode($transfer->load(['asset', 'fromLocation', 'toLocation', 'toDepartment', 'toUser'])) }})" class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-1.5 text-xs font-medium" title="Lihat Detail">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        <span>Detail</span>
+                                    </button>
                                     @else
                                     <span class="text-xs text-slate-400 italic">No Action</span>
                                     @endif
                                 </div>
                             </td>
-                            @endcanany
                         </tr>
                         @empty
                         <tr>
@@ -530,6 +554,63 @@
             </form>
         </div>
     </div>
+
+    <!-- 🌟 MODAL VIEW DETAIL -->
+    <div id="modal-detail" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-3 sm:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700/60 w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden transform transition-all">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-sm">Detail Mutasi Aset</h3>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl leading-none">&times;</button>
+            </div>
+
+            <div class="p-5 space-y-3 text-xs overflow-y-auto">
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Aset Yang Dimutasi:</span>
+                    <span id="detail-asset_name" class="font-semibold text-slate-800 dark:text-slate-100 text-right">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Tipe Mutasi:</span>
+                    <span id="detail-transfer_type" class="font-medium text-slate-700 dark:text-slate-300">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Tanggal Mutasi:</span>
+                    <span id="detail-transfer_date" class="font-medium text-slate-700 dark:text-slate-300">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Lokasi Tujuan:</span>
+                    <span id="detail-to_location" class="font-bold text-blue-600 dark:text-blue-400">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Departemen Tujuan:</span>
+                    <span id="detail-to_department" class="font-medium text-slate-700 dark:text-slate-300">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Penanggung Jawab (User):</span>
+                    <span id="detail-to_user" class="font-medium text-slate-700 dark:text-slate-300">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Nomor Dokumen / BA:</span>
+                    <span id="detail-document_number" class="font-medium text-slate-700 dark:text-slate-300">-</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-100 dark:border-slate-700/40 pb-2">
+                    <span class="text-slate-400">Status:</span>
+                    <span id="detail-status" class="font-bold uppercase">-</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block mb-1">Alasan Perpindahan:</span>
+                    <p id="detail-reason" class="text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-lg">-</p>
+                </div>
+                <div>
+                    <span class="text-slate-400 block mb-1">Catatan Tambahan:</span>
+                    <p id="detail-notes" class="text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-lg">-</p>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/50 flex justify-end shrink-0">
+                <button type="button" onclick="closeDetailModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition-all">Tutup</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -612,6 +693,64 @@
 
         modal.classList.remove('hidden');
     }
+
+    function openDetailModal(data) {
+        // Helper aman untuk mengisi innerText
+        const setSafeText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
+
+        // 1. Nama & Informasi Aset
+        let assetName = '-';
+        if (data.asset) {
+            let code = data.asset.asset_code ?? data.asset.code ?? '-';
+            let brand = data.asset.brand ? ' (' + data.asset.brand + ')' : '';
+            let serial = data.asset.serial_number ? ' | SN: ' + data.asset.serial_number : '';
+            assetName = `${data.asset.name}${brand} — [${code}]${serial}`;
+        }
+        setSafeText('detail-asset_name', assetName);
+
+        // 2. Tipe Mutasi
+        let transferType = 'Permanen (Pindah Lokasi)';
+        if (data.transfer_type === 'temporary') transferType = 'Sementara (Peminjaman)';
+        else if (data.transfer_type === 'return') transferType = 'Pengembalian';
+        setSafeText('detail-transfer_type', transferType);
+
+        // 3. Tanggal & Lokasi
+        setSafeText('detail-transfer_date', data.transfer_date ? data.transfer_date.split('T')[0] : '-');
+        setSafeText('detail-to_location', data.to_location ? data.to_location.name : '-');
+
+        // 4. Departemen & User Tujuan
+        let deptName = data.to_department ? data.to_department.name : (data.to_department_name || '-');
+        let userName = data.to_user ? data.to_user.name : (data.to_user_name || '-');
+        setSafeText('detail-to_department', deptName);
+        setSafeText('detail-to_user', userName);
+
+        // 5. Dokumen, Alasan, & Catatan
+        setSafeText('detail-document_number', data.document_number || '-');
+        setSafeText('detail-reason', data.reason || '-');
+        setSafeText('detail-notes', data.notes || '-');
+
+        // 6. Badge Status
+        const statusEl = document.getElementById('detail-status');
+        if (statusEl) {
+            statusEl.innerText = (data.status || '-').toUpperCase();
+            statusEl.className = "px-2.5 py-1 text-[10px] font-bold rounded-full uppercase " +
+                (data.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' :
+                    (data.status === 'rejected' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'));
+        }
+
+        // Tampilkan Modal
+        const modal = document.getElementById('modal-detail');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+        const modal = document.getElementById('modal-detail');
+        if (modal) modal.classList.add('hidden');
+    }
+
 
     function closeModal() {
         modal.classList.add('hidden');

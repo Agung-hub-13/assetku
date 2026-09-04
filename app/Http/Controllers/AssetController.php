@@ -392,10 +392,12 @@ class AssetController extends Controller
 
         try {
             $request->validate([
-                'asset_ids'   => 'required',
-                'location_id' => 'required|exists:asset_locations,id',
-                'category_id' => 'required|exists:asset_categories,id',
-                'status'      => 'nullable',
+                'asset_ids'     => 'required',
+                'location_id'   => 'required|exists:asset_locations,id',
+                'category_id'   => 'required|exists:asset_categories,id',
+                'department_id' => 'nullable|exists:departments,id', // Tambahan Departemen
+                'user_id'       => 'nullable|exists:users,id',       // Tambahan User
+                'status'        => 'required|in:draft,active,maintenance,disposed,lost', // Tambahan Status
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Bulk Assign Validation Failed:', $e->errors());
@@ -440,13 +442,20 @@ class AssetController extends Controller
                     $formattedCode = $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
                     $updateData = [
-                        'location_id' => $request->location_id,
-                        'category_id' => $request->category_id,
-                        'asset_code'  => $formattedCode,
+                        'location_id'   => $request->location_id,
+                        'category_id'   => $request->category_id,
+                        'asset_code'    => $formattedCode,
+                        'status'        => $request->status,
                     ];
 
-                    if ($request->filled('status')) {
-                        $updateData['status'] = $request->status;
+                    // Tambahkan department_id jika diisi
+                    if ($request->filled('department_id')) {
+                        $updateData['department_id'] = $request->department_id;
+                    }
+
+                    // Tambahkan user_id jika diisi
+                    if ($request->filled('user_id')) {
+                        $updateData['user_id'] = $request->user_id;
                     }
 
                     Log::info("Updating Asset ID {$asset->id}:", $updateData);
