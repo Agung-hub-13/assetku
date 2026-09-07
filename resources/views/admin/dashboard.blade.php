@@ -7,20 +7,14 @@
 
     <!-- 🌟 ELEMEN WATERMARK TRANSPARAN -->
     <div class="absolute inset-0 pointer-events-none z-0 flex items-center justify-center select-none overflow-hidden">
-        <!-- Pola Grid Halus sebagai Dasar -->
         <div class="absolute inset-0 opacity-[0.4] dark:opacity-[0.15]"
             style="background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); background-size: 40px 40px;"></div>
 
-        <!-- Ikon Geometris Besar di Tengah (Statis & Transparan) -->
         <div class="text-slate-300 dark:text-slate-800 opacity-[0.25] dark:opacity-[0.2] transform scale-125 md:scale-150 p-4">
             <svg class="w-96 h-96 md:w-[500px] md:h-[500px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <!-- Lingkaran Luar Putus-putus -->
                 <circle cx="12" cy="12" r="10" stroke-width="0.5" stroke-dasharray="4 4" />
-                <!-- Lingkaran Tengah Solid Tipis -->
                 <circle cx="12" cy="12" r="7.5" stroke-width="0.75" />
-                <!-- Pola Akses Struktur Keamanan Simetris -->
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.75" d="M12 2v4m0 12v4M2 12h4m12 0h4" />
-                <!-- Inti Perisai Abstrak di Pusat -->
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.75" d="M12 8.5c-1.5 0-3.5 1-3.5 3.5 0 2.5 2 4 3.5 4.5 1.5-.5 3.5-2 3.5-4.5 0-2.5-2-3.5-3.5-3.5z" />
             </svg>
         </div>
@@ -34,7 +28,7 @@
                     <span class="h-6 w-1.5 bg-blue-600 rounded-full inline-block"></span>
                     Asset Management Command Center
                 </h1>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitoring real-time kuantitas aset, alokasi area, dan status operasional unit.</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitoring real-time kuantitas aset, status operasional, alokasi area, dan aktivitas terbaru.</p>
             </div>
         </div>
 
@@ -60,7 +54,19 @@
                     </select>
                 </div>
 
-                {{-- Dropdown 2: Status Aset --}}
+                {{-- Dropdown 2: Departemen --}}
+                <div class="w-full sm:w-48">
+                    <select id="filter-departemen" class="w-full text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Departemen</option>
+                        @if(isset($filterDepartemen))
+                            @foreach($filterDepartemen as $dept)
+                                <option value="{{ $dept->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{{ $dept->name }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+
+                {{-- Dropdown 3: Status Aset --}}
                 <div class="w-full sm:w-40">
                     <select id="filter-status" class="w-full text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Status</option>
@@ -81,13 +87,13 @@
             </button>
         </div>
 
-        {{-- Kumpulan KPI Cards Modern (3 Kolom Fokus Kuantitas & Operasional) --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        {{-- Kumpulan KPI Cards (5 Kolom: Kuantitas, Lokasi, Aktif, Maintenance, Perlu Perhatian) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             {{-- CARD 1: Total Aset --}}
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Kuantitas Aset</p>
-                    <h3 id="total-asset-count" class="text-3xl font-black text-slate-900 dark:text-white mt-2">
+                    <h3 id="total-asset-count" class="text-2xl font-black text-slate-900 dark:text-white mt-2">
                         {{ $totalAssetCount ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Unit</span>
                     </h3>
                 </div>
@@ -102,7 +108,7 @@
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sebaran Area</p>
-                    <h3 id="total-location-count" class="text-3xl font-black text-slate-900 dark:text-white mt-2">
+                    <h3 id="total-location-count" class="text-2xl font-black text-slate-900 dark:text-white mt-2">
                         {{ isset($locations) ? $locations->count() : 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Lokasi</span>
                     </h3>
                 </div>
@@ -114,11 +120,42 @@
                 </div>
             </div>
 
-            {{-- CARD 3: Aset Perlu Perhatian / Maintenance / Depresiasi Habis --}}
+            {{-- CARD 3: Aset Aktif --}}
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Aset Aktif</p>
+                    <h3 id="total-active-count" class="text-2xl font-black text-slate-900 dark:text-white mt-2">
+                        {{ $totalActive ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Unit</span>
+                    </h3>
+                </div>
+                <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            {{-- CARD 4: Sedang Maintenance --}}
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sedang Maintenance</p>
+                    <h3 id="total-maintenance-count" class="text-2xl font-black text-slate-900 dark:text-white mt-2">
+                        {{ $totalMaintenance ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Unit</span>
+                    </h3>
+                </div>
+                <div class="p-3.5 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 rounded-2xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                </div>
+            </div>
+
+            {{-- CARD 5: Aset Perlu Perhatian / Nilai Buku Habis --}}
             <a href="/admin/assets?depreciated=1" class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:border-red-300 dark:hover:border-red-900/60 hover:shadow-md group">
                 <div>
-                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">Perlu Perhatian / Nilai Buku Habis</p>
-                    <h3 id="total-depreciated-count" class="text-3xl font-black text-red-600 dark:text-red-500 mt-2">
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">Perlu Perhatian</p>
+                    <h3 id="total-depreciated-count" class="text-2xl font-black text-red-600 dark:text-red-500 mt-2">
                         {{ $totalBookValueHabis ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Asset</span>
                     </h3>
                 </div>
@@ -159,6 +196,59 @@
                     </canvas>
                 </div>
             </div>
+
+            {{-- Pie Chart Status Aset --}}
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm transition-colors duration-300">
+                <div class="mb-4">
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Breakdown Status Aset</h4>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">Komposisi aset berdasarkan status operasional.</p>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="chartStatus"
+                        data-labels="{{ json_encode($chartStatusData['labels'] ?? []) }}"
+                        data-values="{{ json_encode($chartStatusData['values'] ?? []) }}">
+                    </canvas>
+                </div>
+            </div>
+
+            {{-- Line Chart Tren Akuisisi Aset --}}
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm transition-colors duration-300">
+                <div class="mb-4">
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Tren Akuisisi Aset (12 Bulan)</h4>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">Jumlah unit aset baru per bulan.</p>
+                </div>
+                <div class="relative h-64 w-full">
+                    <canvas id="chartTrend"
+                        data-labels="{{ json_encode($chartTrendData['labels'] ?? []) }}"
+                        data-values="{{ json_encode($chartTrendData['values'] ?? []) }}">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+
+        {{-- Aktivitas Terbaru --}}
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm mt-6">
+            <div class="mb-4">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Aktivitas Terbaru</h4>
+                <p class="text-xs text-slate-400 dark:text-slate-500">Mutasi, peminjaman, dan maintenance terakhir di seluruh sistem.</p>
+            </div>
+            <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                @forelse($recentActivities as $act)
+                <li class="py-3 flex items-start gap-3">
+                    <span class="text-xl leading-none">{{ $act['icon'] }}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ $act['title'] }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $act['description'] }}</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $act['status'] }}</span>
+                        <p class="text-[10px] text-slate-400 mt-1">{{ optional($act['time'])->diffForHumans() }}</p>
+                    </div>
+                </li>
+                @empty
+                <li class="py-6 text-center text-slate-400 text-xs">Belum ada aktivitas.</li>
+                @endforelse
+            </ul>
         </div>
     </div>
 </div>
@@ -169,15 +259,25 @@
 <script>
     let chartLokasiInstance = null;
     let chartDepartemenInstance = null;
+    let chartStatusInstance = null;
+    let chartTrendInstance = null;
 
     const canvasLokasi = document.getElementById('chartLokasi');
     const canvasDept = document.getElementById('chartDepartemen');
+    const canvasStatus = document.getElementById('chartStatus');
+    const canvasTrend = document.getElementById('chartTrend');
 
     const initialChartLokasiLabels = canvasLokasi ? JSON.parse(canvasLokasi.getAttribute('data-labels') || '[]') : [];
     const initialChartLokasiValues = canvasLokasi ? JSON.parse(canvasLokasi.getAttribute('data-values') || '[]').map(Number) : [];
 
     const initialChartDeptLabels = canvasDept ? JSON.parse(canvasDept.getAttribute('data-labels') || '[]') : [];
     const initialChartDeptValues = canvasDept ? JSON.parse(canvasDept.getAttribute('data-values') || '[]').map(Number) : [];
+
+    const initialStatusLabels = canvasStatus ? JSON.parse(canvasStatus.getAttribute('data-labels') || '[]') : [];
+    const initialStatusValues = canvasStatus ? JSON.parse(canvasStatus.getAttribute('data-values') || '[]').map(Number) : [];
+
+    const initialTrendLabels = canvasTrend ? JSON.parse(canvasTrend.getAttribute('data-labels') || '[]') : [];
+    const initialTrendValues = canvasTrend ? JSON.parse(canvasTrend.getAttribute('data-values') || '[]').map(Number) : [];
 
     function getChartTextColor() {
         return document.documentElement.classList.contains('dark') ? '#94a3b8' : '#64748b';
@@ -186,6 +286,8 @@
     function getChartBorderColor() {
         return document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff';
     }
+
+    const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num || 0);
 
     function initOrUpdateCharts(lokasiLabels, lokasiValues, deptLabels, deptValues) {
         const textColor = getChartTextColor();
@@ -200,8 +302,7 @@
                 chartLokasiInstance.options.plugins.legend.labels.color = textColor;
                 chartLokasiInstance.update();
             } else {
-                const ctxLokasi = canvasLokasi.getContext('2d');
-                chartLokasiInstance = new Chart(ctxLokasi, {
+                chartLokasiInstance = new Chart(canvasLokasi.getContext('2d'), {
                     type: 'doughnut',
                     data: {
                         labels: lokasiLabels,
@@ -219,16 +320,7 @@
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: {
-                                    boxWidth: 8,
-                                    usePointStyle: true,
-                                    font: {
-                                        size: 10,
-                                        weight: '600'
-                                    },
-                                    color: textColor,
-                                    padding: 15
-                                }
+                                labels: { boxWidth: 8, usePointStyle: true, font: { size: 10, weight: '600' }, color: textColor, padding: 15 }
                             }
                         }
                     }
@@ -236,7 +328,7 @@
             }
         }
 
-        // 2. Bar Chart Departemen (Volume Unit)
+        // 2. Bar Chart Departemen
         if (canvasDept) {
             if (chartDepartemenInstance) {
                 chartDepartemenInstance.data.labels = deptLabels;
@@ -245,8 +337,7 @@
                 chartDepartemenInstance.options.scales.y.ticks.color = textColor;
                 chartDepartemenInstance.update();
             } else {
-                const ctxDept = canvasDept.getContext('2d');
-                chartDepartemenInstance = new Chart(ctxDept, {
+                chartDepartemenInstance = new Chart(canvasDept.getContext('2d'), {
                     type: 'bar',
                     data: {
                         labels: deptLabels,
@@ -262,35 +353,13 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
+                        plugins: { legend: { display: false } },
                         scales: {
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: textColor,
-                                    font: {
-                                        size: 10
-                                    }
-                                }
-                            },
+                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } },
                             y: {
-                                grid: {
-                                    color: document.documentElement.classList.contains('dark') ? '#33415533' : '#f1f5f9'
-                                },
+                                grid: { color: document.documentElement.classList.contains('dark') ? '#33415533' : '#f1f5f9' },
                                 beginAtZero: true,
-                                ticks: {
-                                    color: textColor,
-                                    font: {
-                                        size: 10
-                                    },
-                                    precision: 0
-                                }
+                                ticks: { color: textColor, font: { size: 10 }, precision: 0 }
                             }
                         }
                     }
@@ -299,12 +368,92 @@
         }
     }
 
+    function initOrUpdateStatusChart(labels, values) {
+        if (!canvasStatus) return;
+        const textColor = getChartTextColor();
+        const borderColor = getChartBorderColor();
+
+        if (chartStatusInstance) {
+            chartStatusInstance.data.labels = labels;
+            chartStatusInstance.data.datasets[0].data = values;
+            chartStatusInstance.data.datasets[0].borderColor = borderColor;
+            chartStatusInstance.options.plugins.legend.labels.color = textColor;
+            chartStatusInstance.update();
+            return;
+        }
+
+        chartStatusInstance = new Chart(canvasStatus.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#10b981', '#94a3b8', '#f59e0b', '#ef4444', '#64748b', '#3b82f6'],
+                    borderWidth: 3,
+                    borderColor: borderColor
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 8, usePointStyle: true, font: { size: 10, weight: '600' }, color: textColor, padding: 15 }
+                    }
+                }
+            }
+        });
+    }
+
+    function initOrUpdateTrendChart(labels, values) {
+        if (!canvasTrend) return;
+        const textColor = getChartTextColor();
+
+        if (chartTrendInstance) {
+            chartTrendInstance.data.labels = labels;
+            chartTrendInstance.data.datasets[0].data = values;
+            chartTrendInstance.options.scales.x.ticks.color = textColor;
+            chartTrendInstance.options.scales.y.ticks.color = textColor;
+            chartTrendInstance.update();
+            return;
+        }
+
+        chartTrendInstance = new Chart(canvasTrend.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Aset Baru',
+                    data: values,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.12)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#3b82f6',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } },
+                    y: { beginAtZero: true, ticks: { color: textColor, font: { size: 10 }, precision: 0 } }
+                }
+            }
+        });
+    }
+
     function refreshDashboardData() {
         const lokasi = document.getElementById('filter-lokasi').value;
+        const departemen = document.getElementById('filter-departemen').value;
         const status = document.getElementById('filter-status').value;
 
         const params = new URLSearchParams();
         if (lokasi) params.append('lokasi', lokasi);
+        if (departemen) params.append('department_id', departemen);
         if (status) params.append('status', status);
 
         const apiUrl = `/admin/api/dashboard-assets?${params.toString()}`;
@@ -319,23 +468,28 @@
                 return response.json();
             })
             .then(data => {
-                const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num);
-
-                // Update KPI Cards
                 document.getElementById('total-asset-count').innerHTML = `${formatNumber(data.kpi.total_count)} <span class="text-xs font-normal text-slate-400">Unit</span>`;
                 document.getElementById('total-location-count').innerHTML = `${formatNumber(data.kpi.total_location)} <span class="text-xs font-normal text-slate-400">Lokasi</span>`;
 
                 if (data.kpi.total_book_value_habis !== undefined) {
                     document.getElementById('total-depreciated-count').innerHTML = `${formatNumber(data.kpi.total_book_value_habis)} <span class="text-xs font-normal text-slate-400">Asset</span>`;
                 }
+                if (data.kpi.total_active !== undefined) {
+                    document.getElementById('total-active-count').innerHTML = `${formatNumber(data.kpi.total_active)} <span class="text-xs font-normal text-slate-400">Unit</span>`;
+                }
+                if (data.kpi.total_maintenance !== undefined) {
+                    document.getElementById('total-maintenance-count').innerHTML = `${formatNumber(data.kpi.total_maintenance)} <span class="text-xs font-normal text-slate-400">Unit</span>`;
+                }
 
-                // Render & Update data grafik
                 initOrUpdateCharts(
                     data.chart_lokasi.labels,
                     data.chart_lokasi.values,
                     data.chart_departemen.labels,
                     data.chart_departemen.values.map(Number)
                 );
+
+                initOrUpdateStatusChart(data.chart_status.labels, data.chart_status.values.map(Number));
+                initOrUpdateTrendChart(data.chart_trend.labels, data.chart_trend.values.map(Number));
             })
             .catch(error => {
                 console.error('Gagal memperbarui filter dashboard:', error);
@@ -360,17 +514,26 @@
             initialChartDeptValues
         );
 
+        initOrUpdateStatusChart(initialStatusLabels, initialStatusValues);
+        initOrUpdateTrendChart(initialTrendLabels, initialTrendValues);
+
         const toggleBtn = document.getElementById('dark-mode-toggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', function() {
                 setTimeout(() => {
-                    if (chartLokasiInstance || chartDepartemenInstance) {
+                    if (chartLokasiInstance || chartDepartemenInstance || chartStatusInstance || chartTrendInstance) {
                         initOrUpdateCharts(
                             chartLokasiInstance ? chartLokasiInstance.data.labels : [],
                             chartLokasiInstance ? chartLokasiInstance.data.datasets[0].data : [],
                             chartDepartemenInstance ? chartDepartemenInstance.data.labels : [],
                             chartDepartemenInstance ? chartDepartemenInstance.data.datasets[0].data : []
                         );
+                        if (chartStatusInstance) {
+                            initOrUpdateStatusChart(chartStatusInstance.data.labels, chartStatusInstance.data.datasets[0].data);
+                        }
+                        if (chartTrendInstance) {
+                            initOrUpdateTrendChart(chartTrendInstance.data.labels, chartTrendInstance.data.datasets[0].data);
+                        }
                     }
                 }, 50);
             });

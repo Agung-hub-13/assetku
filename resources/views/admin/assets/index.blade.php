@@ -296,6 +296,7 @@
                             "book_value" => number_format($asset->book_value ?? 0, 0, ",", "."),
                             "category" => $asset->category->name ?? $asset->accurate_category_name ?? "-",
                             "department" => $asset->department->name ?? "-",
+                            "user" => $asset->user->name ?? "-",
                             "status" => strtoupper($asset->status ?? "-"),
                             "location" => $activeLocation->name ?? "-",
                             "building" => $activeLocation->building ?? $asset->building_name ?? "-",
@@ -401,6 +402,12 @@
                             <span id="m-accurate" class="font-bold font-mono text-slate-700 dark:text-slate-200 text-sm">-</span>
                         </div>
                     </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs pt-1">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">User</span>
+                            <span id="m-user" class="font-bold text-slate-700 dark:text-slate-200 text-sm">-</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tombol Cetak Langsung ke print-qrcode.blade.php -->
@@ -500,7 +507,7 @@
 <div id="crudModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="fixed inset-0 bg-slate-900/60 transition-opacity" onclick="closeModal()"></div>
     <div class="flex min-h-full items-center justify-center p-3 sm:p-4">
-        <div class="relative w-full max-w-4xl rounded-2xl md:rounded-3xl bg-white dark:bg-slate-800 shadow-2xl transition-all scale-95 opacity-0 duration-300" id="modalContainer">
+        <div class="relative w-full max-w-2xl rounded-2xl md:rounded-3xl bg-white dark:bg-slate-800 shadow-2xl transition-all scale-95 opacity-0 duration-300" id="modalContainer">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 p-5 sm:px-8">
                 <h3 id="modalTitle" class="text-lg sm:text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Form Aset</h3>
                 <button type="button" onclick="closeModal()" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
@@ -514,7 +521,7 @@
                 @csrf
                 <div id="methodField"></div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div class="gap-4 sm:gap-6">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
@@ -538,13 +545,7 @@
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Serial Number</label>
                                 <input type="text" name="serial_number" id="a_serial" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Jumlah (Qty) <span class="text-rose-500">*</span></label>
-                                <input type="number" name="quantity" id="a_quantity" required min="1" value="1" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
-                            </div>
-                        </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="mb-4">
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Kategori</label>
                                 <select name="category_id" id="a_category" class="searchable-select w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
@@ -556,6 +557,15 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            <div class="hidden">
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Jumlah (Qty) <span class="text-rose-500">*</span></label>
+                                <input type="number" name="quantity" id="a_quantity" required min="1" value="1" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Departemen</label>
                                 <!-- Ditambahkan class searchable-select -->
@@ -608,9 +618,7 @@
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Deskripsi Aset</label>
                             <textarea name="description" id="a_description" rows="3" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition" placeholder="Keterangan tambahan aset..."></textarea>
                         </div>
-                    </div>
 
-                    <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Status Aset <span class="text-rose-500">*</span></label>
                             <select name="status" id="a_status" required class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
@@ -621,16 +629,15 @@
                                 <option value="lost">Lost</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="hidden">
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Harga Beli Satuan</label>
+                        <input type="number" name="purchase_price" id="a_price" min="0" step="any" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition" placeholder="0">
+                    </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Harga Beli Satuan</label>
-                            <input type="number" name="purchase_price" id="a_price" min="0" step="any" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition" placeholder="0">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tanggal Pembelian</label>
-                            <input type="date" name="purchase_date" id="a_purchase_date" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
-                        </div>
+                    <div class="hidden">
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tanggal Pembelian</label>
+                        <input type="date" name="purchase_date" id="a_purchase_date" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 text-sm font-semibold transition">
                     </div>
                 </div>
 
@@ -787,6 +794,7 @@
         document.getElementById('m-name').innerText = data.name;
         document.getElementById('m-code').innerText = data.asset_code;
         document.getElementById('m-accurate').innerText = data.accurate_no;
+        document.getElementById('m-user').innerText = data.user;
         document.getElementById('m-serial').innerText = data.serial_number;
         document.getElementById('m-qty').innerText = data.quantity;
         document.getElementById('m-purchase-date').innerText = data.purchase_date;

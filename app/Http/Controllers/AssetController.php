@@ -274,7 +274,29 @@ class AssetController extends Controller
 
             Log::info('VALIDATED DATA', $validated);
 
-            if (empty($validated['asset_code'])) {
+            // Logika Update Asset Code Berdasarkan Kategori Baru (Meniru logika Bulk Assign)
+            $newCategoryId = $validated['category_id'] ?? null;
+
+            if ($newCategoryId && ($newCategoryId != $asset->category_id || empty($validated['asset_code']))) {
+                $category = AssetCategory::find($newCategoryId);
+                $prefix = $category->code_prefix ?? 'AST';
+
+                // Cari nomor urut terakhir berdasarkan prefix kategori tersebut (mengecualikan aset yang sedang diedit)
+                $lastAsset = Asset::where('id', '!=', $asset->id)
+                    ->where('asset_code', 'LIKE', $prefix . '-%')
+                    ->orderByRaw("CAST(SPLIT_PART(asset_code, '-', 2) AS INTEGER) DESC")
+                    ->first();
+
+                $nextNumber = 1;
+                if ($lastAsset) {
+                    $lastNumberString = substr($lastAsset->asset_code, strlen($prefix) + 1);
+                    if (is_numeric($lastNumberString)) {
+                        $nextNumber = (int)$lastNumberString + 1;
+                    }
+                }
+
+                $validated['asset_code'] = $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            } elseif (empty($validated['asset_code'])) {
                 $validated['asset_code'] = $this->generateUniqueAssetCode($validated['name']);
             }
 
