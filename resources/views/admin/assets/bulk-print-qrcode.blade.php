@@ -124,7 +124,7 @@
 
         .asset-code-text {
             margin-top: 1mm;
-            font-size: 9.5pt;
+            font-size: 5.5pt;
             font-weight: 900;
             color: #000000;
             letter-spacing: 0.3px;
