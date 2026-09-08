@@ -51,7 +51,10 @@
             </span>
             <h1 class="text-2xl font-black tracking-tight leading-snug">{{ $asset->name }}</h1>
             <p class="text-xs text-blue-100 font-mono tracking-wider mt-1 opacity-90">
-                {{ $asset->asset_code ?? $asset->asset_number ?? '-' }}
+                {{ $asset->asset_code ?? '-' }}
+            </p>
+            <p class="text-xs text-blue-100 font-mono tracking-wider mt-1 opacity-90">
+                {{ $asset->asset_number ?? '-' }}
             </p>
         </div>
 

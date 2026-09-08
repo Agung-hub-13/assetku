@@ -287,6 +287,7 @@
                             "qr_token" => $asset->qr_token,
                             "name" => $asset->name,
                             "asset_code" => $asset->asset_code ?? "-",
+                            "asset_number" => $asset->asset_number ?? "-",
                             "accurate_no" => $asset->accurate_no ?? "-",
                             "serial_number" => $asset->serial_number ?? "-",
                             "description" => $asset->description ?? "-",
@@ -403,6 +404,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs pt-1">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">No Asset</span>
+                            <span id="m-number" class="font-bold text-slate-700 dark:text-slate-200 text-sm">-</span>
+                        </div>
                         <div>
                             <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">User</span>
                             <span id="m-user" class="font-bold text-slate-700 dark:text-slate-200 text-sm">-</span>
@@ -793,6 +798,7 @@
     function openDetailModal(data) {
         document.getElementById('m-name').innerText = data.name;
         document.getElementById('m-code').innerText = data.asset_code;
+        document.getElementById('m-number').innerText = data.asset_number;
         document.getElementById('m-accurate').innerText = data.accurate_no;
         document.getElementById('m-user').innerText = data.user;
         document.getElementById('m-serial').innerText = data.serial_number;
