@@ -11,6 +11,7 @@ use App\Models\AssetLoan;
 use App\Models\AssetMaintenance;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class AssetDashboardController extends Controller
 {
@@ -39,6 +40,10 @@ class AssetDashboardController extends Controller
         $locations = AssetLocation::all();
         $totalAssetCount = Asset::count();
         $totalBookValueHabis = Asset::where('book_value', 0)->count();
+        $totalNew = Asset::where(function ($q) {
+            $q->where('purchase_date', '>=', Carbon::now()->subDays(7))
+                ->orWhere('created_at', '>=', Carbon::now()->subDays(7));
+        })->count();
 
         $statusCounts = Asset::select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
@@ -93,7 +98,8 @@ class AssetDashboardController extends Controller
             'chartTrendData',
             'recentActivities',
             'filterLokasi',
-            'filterDepartemen'
+            'filterDepartemen',
+            'totalNew'
         ));
     }
 

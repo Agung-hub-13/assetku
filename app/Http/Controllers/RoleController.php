@@ -15,10 +15,15 @@ class RoleController extends Controller
                 'access-mobile'  => 'Akses Versi Mobile App',
             ],
             'Manajemen Aset' => [
-                'asset.view'   => 'Lihat Aset',
-                'asset.create' => 'Tambah Aset',
-                'asset.edit'   => 'Edit Aset',
-                'asset.delete' => 'Hapus Aset',
+                'Daftar Aset' => [
+                    'asset.view'        => 'Lihat Aset',
+                    'asset.create'      => 'Tambah Aset',
+                    'asset.edit'        => 'Edit Aset',
+                    'asset.delete'      => 'Hapus Aset',
+                ],
+                'Depresiasi Aset' => [
+                    'asset.depreciated' => 'Lihat Aset Terdepresiasi',
+                ]
             ],
             'Master Data' => [
                 'asset-departments.view' => 'Lihat Departemen',
@@ -104,5 +109,40 @@ class RoleController extends Controller
 
         $role->delete();
         return redirect()->route('admin.roles.index')->with('success', 'Role berhasil dihapus.');
+    }
+
+    public function permissionsMatrix(Request $request)
+    {
+        $roles = Role::all();
+        $selectedRole = $request->filled('role_id')
+            ? Role::with('permissions')->find($request->role_id)
+            : $roles->first();
+
+        $modules = $this->getModules();
+        $groupedPermissions = [];
+
+        // Konversi array getModules() (Modul Utama -> Sub-modul -> Permission) menjadi instance Model Spatie
+        foreach ($modules as $moduleName => $submodules) {
+            $groupedPermissions[$moduleName] = [];
+
+            foreach ($submodules as $submoduleName => $permissionsArray) {
+                $permissionCollection = collect();
+
+                foreach ($permissionsArray as $permName => $label) {
+                    // Pastikan permission terdaftar secara otomatis di database
+                    $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
+                        'name' => $permName,
+                        'guard_name' => 'web'
+                    ]);
+                    $permissionCollection->push($permission);
+                }
+
+                $groupedPermissions[$moduleName][$submoduleName] = $permissionCollection;
+            }
+        }
+
+        $rolePermissions = $selectedRole ? $selectedRole->permissions->pluck('name')->toArray() : [];
+
+        return view('admin.roles.permissions', compact('roles', 'selectedRole', 'groupedPermissions', 'rolePermissions'));
     }
 }

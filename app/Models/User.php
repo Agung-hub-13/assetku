@@ -40,4 +40,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
+
+    public function locations()
+    {
+        return $this->belongsToMany(AssetLocation::class, 'asset_location_user', 'user_id', 'asset_location_id');
+    }
 }

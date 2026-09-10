@@ -266,6 +266,10 @@ Route::prefix('admin')
             ->middleware('permission:role.edit')
             ->name('role-permissions.update');
 
+        Route::get('/roles/{role}/permissions-matrix', [RoleController::class, 'permissionsMatrix'])
+            ->middleware('permission:role.view')
+            ->name('roles.permissions-matrix');
+
         Route::resources([
             'asset_categories'   => AssetCategoryController::class,
             'asset_locations'    => AssetLocationController::class,

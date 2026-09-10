@@ -6,7 +6,7 @@
         'Master Data' => [
             ['route' => 'admin.asset_locations.index', 'icon' => 'map-pin', 'label' => 'Lokasi Asset', 'permission' => 'asset-locations.view'],
             ['route' => 'admin.asset_departments.index', 'icon' => 'building-2', 'label' => 'Departemen', 'permission' => 'asset-departments.view'],
-            ['route' => 'admin.asset_categories.index', 'icon' => 'tags', 'label' => 'Kategori Asset', 'permission' => 'asset-categories.view'],
+            ['route' => 'admin.asset_categories.index', 'icon' => 'tags', 'label' => 'Jenis Asset', 'permission' => 'asset-categories.view'],
         ],
         'Operasional Asset' => [
             ['route' => 'admin.assets.index', 'icon' => 'package', 'label' => 'Data Asset', 'permission' => 'asset.view'],

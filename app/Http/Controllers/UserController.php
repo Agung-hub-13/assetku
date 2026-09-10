@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Department;
+use App\Models\AssetLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -18,13 +19,20 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $departments = Department::all();
+        $locations = AssetLocation::all();
 
-        $users = User::with(['roles', 'department'])
+        $users = User::with(['roles', 'department', 'locations'])
             ->when($request->role, function ($query, $roleName) {
                 return $query->role($roleName);
             })
             ->when($request->department_id, function ($query, $departmentId) {
                 return $query->where('department_id', $departmentId);
+            })
+            ->when($request->location, function ($query, $locationId) {
+                // Filter berdasarkan relasi many-to-many locations
+                return $query->whereHas('locations', function ($q) use ($locationId) {
+                    $q->where('asset_locations.id', $locationId);
+                });
             })
             ->when($request->search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
@@ -36,7 +44,7 @@ class UserController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.users.index', compact('users', 'roles', 'departments'));
+        return view('admin.users.index', compact('users', 'roles', 'departments', 'locations'));
     }
 
     /**
@@ -46,16 +54,17 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $departments = Department::all();
+        $locations = AssetLocation::all();
 
-        return view('admin.users.create', compact('roles', 'departments'));
+        return view('admin.users.create', compact('roles', 'departments', 'locations'));
     }
 
     /**
-     * Tampilkan detail pengguna (Solusi untuk error UserController::show).
+     * Tampilkan detail pengguna.
      */
     public function show(User $user)
     {
-        $user->load(['roles', 'department']);
+        $user->load(['roles', 'department', 'locations']);
 
         return view('admin.users.show', compact('user'));
     }
@@ -67,12 +76,12 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $departments = Department::all();
+        $locations = AssetLocation::all();
         $userRoles = $user->roles->pluck('name')->toArray();
+        $userLocations = $user->locations->pluck('id')->toArray();
 
-        return view('admin.users.edit', compact('user', 'roles', 'departments', 'userRoles'));
+        return view('admin.users.edit', compact('user', 'roles', 'departments', 'locations', 'userRoles', 'userLocations'));
     }
-
-    // app/Http/Controllers/UserController.php
 
     public function store(Request $request)
     {
@@ -82,6 +91,8 @@ class UserController extends Controller
             'password'      => ['required', Rules\Password::defaults()],
             'phone'         => ['nullable', 'string', 'max:20'],
             'department_id' => ['nullable', 'exists:departments,id'],
+            'locations'     => ['nullable', 'array'],
+            'locations.*'   => ['exists:asset_locations,id'],
             'roles'         => ['required', 'array', 'min:1'],
             'roles.*'       => ['exists:roles,id'],
         ], [
@@ -89,6 +100,7 @@ class UserController extends Controller
             'roles.min'      => 'Pilih minimal satu role untuk pengguna ini.',
         ]);
 
+        // Buat user tanpa menyertakan asset_location_id
         $user = User::create([
             'name'          => $request->name,
             'email'         => $request->email,
@@ -97,7 +109,10 @@ class UserController extends Controller
             'department_id' => $request->department_id,
         ]);
 
-        // Ambil instance Role berdasarkan ID dari request
+        // Sync Multi-Lokasi
+        $user->locations()->sync($request->locations ?? []);
+
+        // Sinkronisasi Role
         $roles = Role::whereIn('id', $request->roles)->get();
         $user->syncRoles($roles);
 
@@ -111,6 +126,8 @@ class UserController extends Controller
             'email'         => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'phone'         => ['nullable', 'string', 'max:20'],
             'department_id' => ['nullable', 'exists:departments,id'],
+            'locations'     => ['nullable', 'array'],
+            'locations.*'   => ['exists:asset_locations,id'],
             'roles'         => ['required', 'array', 'min:1'],
             'roles.*'       => ['exists:roles,id'],
         ], [
@@ -118,6 +135,7 @@ class UserController extends Controller
             'roles.min'      => 'Pilih minimal satu role untuk pengguna ini.',
         ]);
 
+        // Update data utama user tanpa asset_location_id
         $user->update([
             'name'          => $request->name,
             'email'         => $request->email,
@@ -135,7 +153,10 @@ class UserController extends Controller
             ]);
         }
 
-        // Ambil instance Role berdasarkan ID dari request
+        // Sync Multi-Lokasi
+        $user->locations()->sync($request->locations ?? []);
+
+        // Sinkronisasi Role
         $roles = Role::whereIn('id', $request->roles)->get();
         $user->syncRoles($roles);
 

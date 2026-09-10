@@ -26,7 +26,7 @@
             <div>
                 <h1 class="text-2xl font-black text-slate-950 dark:text-white tracking-tight flex items-center gap-2">
                     <span class="h-6 w-1.5 bg-blue-600 rounded-full inline-block"></span>
-                    Asset Management Command Center
+                    Asset Management System
                 </h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitoring real-time kuantitas aset, status operasional, alokasi area, dan aktivitas terbaru.</p>
             </div>
@@ -47,9 +47,9 @@
                     <select id="filter-lokasi" class="w-full text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Lokasi Utama</option>
                         @if(isset($filterLokasi))
-                            @foreach($filterLokasi as $lokasi)
-                                <option value="{{ $lokasi->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{{ $lokasi->name }}</option>
-                            @endforeach
+                        @foreach($filterLokasi as $lokasi)
+                        <option value="{{ $lokasi->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{{ $lokasi->name }}</option>
+                        @endforeach
                         @endif
                     </select>
                 </div>
@@ -59,9 +59,9 @@
                     <select id="filter-departemen" class="w-full text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Departemen</option>
                         @if(isset($filterDepartemen))
-                            @foreach($filterDepartemen as $dept)
-                                <option value="{{ $dept->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{{ $dept->name }}</option>
-                            @endforeach
+                        @foreach($filterDepartemen as $dept)
+                        <option value="{{ $dept->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{{ $dept->name }}</option>
+                        @endforeach
                         @endif
                     </select>
                 </div>
@@ -88,7 +88,7 @@
         </div>
 
         {{-- Kumpulan KPI Cards (5 Kolom: Kuantitas, Lokasi, Aktif, Maintenance, Perlu Perhatian) --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
             {{-- CARD 1: Total Aset --}}
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
                 <div>
@@ -135,10 +135,25 @@
                 </div>
             </div>
 
+            <a href="{{ route('admin.assets.index', ['new_assets' => '7_days']) }}" class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md hover:border-emerald-500/50 block group">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-emerald-600 transition-colors">Aset Baru Masuk</p>
+                    <h3 id="total-new-count" class="text-2xl font-black text-slate-900 dark:text-white mt-2 flex items-baseline gap-1.5">
+                        {{ $totalNew ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Unit</span>
+                    </h3>
+                    <span class="inline-block mt-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">7 Hari Terakhir</span>
+                </div>
+                <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-2xl group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </a>
+
             {{-- CARD 4: Sedang Maintenance --}}
             <div class="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200/60 dark:border-slate-800 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
                 <div>
-                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sedang Maintenance</p>
+                    <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Dalam Perbaikan</p>
                     <h3 id="total-maintenance-count" class="text-2xl font-black text-slate-900 dark:text-white mt-2">
                         {{ $totalMaintenance ?? 0 }} <span class="text-xs font-normal text-slate-400 dark:text-slate-500">Unit</span>
                     </h3>
@@ -320,7 +335,16 @@
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { boxWidth: 8, usePointStyle: true, font: { size: 10, weight: '600' }, color: textColor, padding: 15 }
+                                labels: {
+                                    boxWidth: 8,
+                                    usePointStyle: true,
+                                    font: {
+                                        size: 10,
+                                        weight: '600'
+                                    },
+                                    color: textColor,
+                                    padding: 15
+                                }
                             }
                         }
                     }
@@ -353,13 +377,35 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
                         scales: {
-                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: textColor,
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            },
                             y: {
-                                grid: { color: document.documentElement.classList.contains('dark') ? '#33415533' : '#f1f5f9' },
+                                grid: {
+                                    color: document.documentElement.classList.contains('dark') ? '#33415533' : '#f1f5f9'
+                                },
                                 beginAtZero: true,
-                                ticks: { color: textColor, font: { size: 10 }, precision: 0 }
+                                ticks: {
+                                    color: textColor,
+                                    font: {
+                                        size: 10
+                                    },
+                                    precision: 0
+                                }
                             }
                         }
                     }
@@ -399,7 +445,16 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 8, usePointStyle: true, font: { size: 10, weight: '600' }, color: textColor, padding: 15 }
+                        labels: {
+                            boxWidth: 8,
+                            usePointStyle: true,
+                            font: {
+                                size: 10,
+                                weight: '600'
+                            },
+                            color: textColor,
+                            padding: 15
+                        }
                     }
                 }
             }
@@ -437,10 +492,33 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
                 scales: {
-                    x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } },
-                    y: { beginAtZero: true, ticks: { color: textColor, font: { size: 10 }, precision: 0 } }
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: textColor,
+                            font: {
+                                size: 10
+                            },
+                            precision: 0
+                        }
+                    }
                 }
             }
         });

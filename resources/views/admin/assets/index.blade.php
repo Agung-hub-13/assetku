@@ -72,6 +72,7 @@
             <p class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mt-1">{{ $assets->total() }}</p>
         </div>
 
+         @can('asset.depreciated')
         <a href="{{ request()->get('depreciated') == '1' ? request()->fullUrlWithQuery(['depreciated' => null]) : request()->fullUrlWithQuery(['depreciated' => '1']) }}"
             class="relative block p-5 rounded-[2rem] border transition-all duration-200 group {{ request()->get('depreciated') == '1' ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900 shadow-inner' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700/50 shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md' }}">
             <div class="flex justify-between items-start">
@@ -88,6 +89,7 @@
                 {{ $totalBookValueHabis ?? 0 }}
             </p>
         </a>
+        @endcan
     </div>
 
     <!-- FILTER & PENCARIAN -->
@@ -198,7 +200,9 @@
                         </th>
                         <th class="px-6 py-4">Informasi Aset</th>
                         <th class="px-6 py-4">Lokasi & Departemen</th>
+                        @can('asset.depreciated')
                         <th class="px-6 py-4">Nilai Buku</th>
+                        @endcan
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
@@ -244,6 +248,7 @@
                         </td>
 
                         <!-- Nilai Buku Ringkas -->
+                         @can('asset.depreciated')
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
                                 @if(($asset->book_value ?? 0) <= 0)
@@ -260,6 +265,7 @@
                                 Beli: {{ $asset->purchase_date ? \Carbon\Carbon::parse($asset->purchase_date)->format('d M Y') : '-' }}
                             </div>
                         </td>
+                        @endcan
 
                         <!-- Status Badge -->
                         <td class="px-6 py-4">

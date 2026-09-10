@@ -32,7 +32,7 @@ class PermissionSeeder extends Seeder
             'asset-departments.view', 'asset-departments.create', 'asset-departments.edit', 'asset-departments.delete',
 
             // Master Aset & Attachments
-            'asset.view', 'asset.create', 'asset.edit', 'asset.delete',
+            'asset.view', 'asset.create', 'asset.edit', 'asset.delete', 'asset.depreciated',
 
             // Mutasi Aset (Transfer)
             'transfer.view', 'transfer.create', 'transfer.edit', 'transfer.delete',

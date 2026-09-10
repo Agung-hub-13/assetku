@@ -116,6 +116,13 @@ class AssetController extends Controller
             $query->where('book_value', '<=', 0);
         }
 
+        if ($request->get('new_assets') == '7_days') {
+            $query->where(function ($q) {
+                $q->where('purchase_date', '>=', Carbon::now()->subDays(7))
+                    ->orWhere('created_at', '>=', Carbon::now()->subDays(7));
+            });
+        }
+
         // 4. Perhitungan Summary
         $totalInvestasi = (clone $query)->sum('purchase_price');
         $totalBookValueHabis = (clone $query)->where('book_value', '<=', 0)->count();

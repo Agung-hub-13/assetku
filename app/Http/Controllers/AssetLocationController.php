@@ -16,13 +16,28 @@ class AssetLocationController extends Controller
 {
     public function index(Request $request): View
     {
-        // Mengambil daftar nama lokasi unik untuk pilihan dropdown filter (case-insensitive)
-        $filterLocations = AssetLocation::select('name')
+        $user = auth()->user();
+
+        // Mengambil daftar nama lokasi unik untuk pilihan dropdown filter (disesuaikan dengan hak akses user)
+        $filterLocationsQuery = AssetLocation::select('name')
             ->distinct()
-            ->orderBy('name', 'asc')
-            ->pluck('name');
+            ->orderBy('name', 'asc');
+
+        if (!$user->hasRole('Super Admin') && !empty($user->asset_location_id)) {
+            $filterLocationsQuery->where('id', $user->asset_location_id);
+        }
+        $filterLocations = $filterLocationsQuery->pluck('name');
 
         $query = AssetLocation::query();
+
+        // Filter otomatis berdasarkan hak akses user
+        if (!$user->hasRole('Super Admin')) {
+            if (!empty($user->asset_location_id)) {
+                // Jika user memiliki lokasi spesifik, batasi hanya lokasi tersebut
+                $query->where('id', $user->asset_location_id);
+            }
+            // Jika asset_location_id bernilai NULL (kosong), user dianggap bisa melihat SEMUA lokasi
+        }
 
         // Fitur Pencarian Data (Case-Insensitive untuk huruf besar/kecil acak)
         if ($request->filled('search')) {
