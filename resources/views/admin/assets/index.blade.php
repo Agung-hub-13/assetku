@@ -237,12 +237,40 @@
 
                         <!-- Lokasi Utama Saja (Dipangkas) -->
                         <td class="px-6 py-4">
+                            @php
+                            $activeLocation = $asset->transfer->toLocation ?? $asset->location;
+
+                            $locationDetails = [];
+                            if ($activeLocation) {
+                            // Hanya mengambil nilainya saja tanpa teks tambahan
+                            if (!empty($activeLocation->building) && $activeLocation->building !== '-') {
+                            $locationDetails[] = $activeLocation->building;
+                            }
+                            if (!empty($activeLocation->floor) && $activeLocation->floor !== '-') {
+                            $locationDetails[] = $activeLocation->floor;
+                            }
+                            if (!empty($activeLocation->room) && $activeLocation->room !== '-') {
+                            $locationDetails[] = $activeLocation->room;
+                            }
+                            }
+                            @endphp
+
                             <div class="flex flex-col gap-1">
+                                <!-- Nama Lokasi Utama -->
                                 <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 truncate max-w-[220px]" title="{{ $activeLocation->name ?? 'Belum Ditentukan' }}">
                                     📍 <span class="truncate">{{ $activeLocation->name ?? 'Belum Ditentukan' }}</span>
                                 </span>
-                                <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[200px]">
-                                    🏢 Dept: {{ $asset->department->name ?? '-' }}
+
+                                <!-- Detail Spesifik (Hanya nilai Gedung — Lantai — Ruang) -->
+                                @if(count($locationDetails) > 0)
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[220px]" title="{{ implode(' — ', $locationDetails) }}">
+                                    🏢 {{ implode(' — ', $locationDetails) }}
+                                </span>
+                                @endif
+
+                                <!-- Departemen -->
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[200px]">
+                                    👤 Dept: {{ $asset->department->name ?? '-' }}
                                 </span>
                             </div>
                         </td>
