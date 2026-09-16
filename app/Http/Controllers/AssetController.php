@@ -94,7 +94,11 @@ class AssetController extends Controller
                     ->orWhere('accurate_no', 'ilike', "%{$search}%")
                     ->orWhere('description', 'ilike', "%{$search}%")
                     ->orWhereHas('location', function ($locationQuery) use ($search) {
-                        $locationQuery->where('name', 'ilike', "%{$search}%");
+                        // Perbaiki bagian ini agar mencakup nama, gedung, lantai, dan ruangan
+                        $locationQuery->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('building', 'ilike', "%{$search}%")
+                            ->orWhere('floor', 'ilike', "%{$search}%")
+                            ->orWhere('room', 'ilike', "%{$search}%");
                     });
             });
         }
@@ -133,11 +137,31 @@ class AssetController extends Controller
             ->appends($request->all());
 
         // 6. Data Master untuk Options (Tanpa parent_id)
-        $locations = AssetLocation::select('id', 'name', 'building', 'floor', 'room')
-            ->orderBy('building')
-            ->orderBy('floor')
-            ->orderBy('name')
-            ->get();
+        $locations = AssetLocation::select('id', 'name', 'code', 'building', 'floor', 'room')
+            ->orderBy('building', 'asc')
+            ->orderBy('floor', 'asc')
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(function ($lok) {
+                // Jika kolom building, floor, dan room lengkap terisi
+                if (!empty($lok->building) && !empty($lok->floor) && !empty($lok->room)) {
+                    $lok->display_name = $lok->building . ' — Lantai ' . $lok->floor . ' — Ruang ' . $lok->room;
+                }
+                // Jika hanya ada building dan room (tanpa lantai)
+                elseif (!empty($lok->building) && !empty($lok->room)) {
+                    $lok->display_name = $lok->building . ' — Ruang ' . $lok->room;
+                }
+                // Jika hanya ada building saja (level gedung)
+                elseif (!empty($lok->building) && empty($lok->room) && empty($lok->floor)) {
+                    $lok->display_name = $lok->building;
+                }
+                // Default fallback menggunakan name asli dari database jika kolom rincian kosong
+                else {
+                    $lok->display_name = $lok->name;
+                }
+
+                return $lok;
+            });
 
         $transfers = AssetTransfer::select('id', 'asset_id', 'from_location_id', 'to_location_id', 'created_at')
             ->with([

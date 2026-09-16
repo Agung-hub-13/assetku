@@ -44,7 +44,7 @@
 
             @can('asset.create')
             <button type="button" onclick="openCreateModal()"
-                class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/10 active:scale-95 text-xs sm:text-sm flex-1 sm:flex-none">
+                class="hidden flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/10 active:scale-95 text-xs sm:text-sm flex-1 sm:flex-none">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -72,7 +72,7 @@
             <p class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 mt-1">{{ $assets->total() }}</p>
         </div>
 
-         @can('asset.depreciated')
+        @can('asset.depreciated')
         <a href="{{ request()->get('depreciated') == '1' ? request()->fullUrlWithQuery(['depreciated' => null]) : request()->fullUrlWithQuery(['depreciated' => '1']) }}"
             class="relative block p-5 rounded-[2rem] border transition-all duration-200 group {{ request()->get('depreciated') == '1' ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900 shadow-inner' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700/50 shadow-sm hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md' }}">
             <div class="flex justify-between items-start">
@@ -248,7 +248,7 @@
                         </td>
 
                         <!-- Nilai Buku Ringkas -->
-                         @can('asset.depreciated')
+                        @can('asset.depreciated')
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
                                 @if(($asset->book_value ?? 0) <= 0)
@@ -612,10 +612,13 @@
                                 if($location->floor && $location->floor !== '-') $meta[] = "Lantai: {$location->floor}";
                                 if($location->room && $location->room !== '-') $meta[] = "Ruangan: {$location->room}";
 
+                                // Gabungkan seluruh teks untuk keyword pencarian yang valid
+                                $searchKeyword = strtolower(trim($location->name . ' ' . implode(' ', $meta)));
+
                                 // Mengecek nilai dari old() atau dari data edit (misal: $asset->location_id)
                                 $selectedId = old('location_id', $asset->location_id ?? '');
                                 @endphp
-                                <option value="{{ $location->id }}" {{ $selectedId == $location->id ? 'selected' : '' }}>
+                                <option value="{{ $location->id }}" data-custom-search="{{ $searchKeyword }}" {{ $selectedId == $location->id ? 'selected' : '' }}>
                                     {{ $location->name }}
                                     @if(count($meta) > 0)
                                     — {{ implode(' | ', $meta) }}
@@ -796,6 +799,31 @@
                 placeholder: true,
                 placeholderValue: 'Cari atau pilih...',
                 position: 'bottom',
+                // Aktifkan pencarian berdasarkan customProperties
+                searchFields: ['label', 'customProperties'],
+                callbackOnCreateTemplates: function(template) {
+                    return {
+                        option: (classNames, data) => {
+                            // Ambil atribut data-custom-search dari elemen option asli di DOM
+                            const originalOption = el.querySelector(`option[value="${data.value}"]`);
+                            const customSearch = originalOption ? originalOption.getAttribute('data-custom-search') : '';
+
+                            return template(`
+                            <div class="${classNames.item} ${classNames.itemChoice} ${data.disabled ? classNames.itemDisabled : classNames.itemSelectable}" 
+                                 data-select-text="${this.config.itemSelectText}" 
+                                 data-choice 
+                                 data-choice-selectable 
+                                 data-id="${data.id}" 
+                                 data-value="${data.value}" 
+                                 data-custom-properties="${customSearch}" 
+                                 role="option" 
+                                 style="white-space: normal;">
+                                ${data.label}
+                            </div>
+                        `);
+                        },
+                    };
+                },
             });
             choicesInstances[el.id] = instance;
         });

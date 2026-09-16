@@ -83,7 +83,26 @@ class AssetDashboardController extends Controller
         // 6. Aktivitas Terbaru
         $recentActivities = $this->getRecentActivities(10);
 
-        $filterLokasi = AssetLocation::select('id', 'name')->whereNotNull('name')->orderBy('name', 'asc')->get();
+        $filterLokasi = AssetLocation::select('id', 'name', 'code', 'building', 'floor', 'room')
+            ->whereNotNull('name')
+            ->orderBy('building', 'asc')
+            ->orderBy('floor', 'asc')
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(function ($lok) {
+                // Membuat format detail: Gedung - Lantai - Ruangan
+                $details = [];
+                if (!empty($lok->building)) $details[] = $lok->building;
+                if (!empty($lok->floor)) $details[] = 'Lt. ' . $lok->floor;
+                if (!empty($lok->room)) $details[] = $lok->room;
+
+                $detailString = count($details) > 0 ? ' (' . implode(' - ', $details) . ')' : '';
+
+                // Kode lokasi tidak disertakan lagi pada display_name
+                $lok->display_name = $lok->name . $detailString;
+                return $lok;
+            });
+
         $filterDepartemen = Department::select('id', 'name')->orderBy('name', 'asc')->get();
 
         return view('admin.dashboard', compact(

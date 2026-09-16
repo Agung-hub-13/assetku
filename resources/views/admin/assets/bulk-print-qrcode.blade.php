@@ -30,26 +30,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             padding-bottom: 40px;
         }
 
+        /* 1 Halaman/Blok Cetak berisi 3 stiker sekaligus */
         .stiker-page {
             width: 24mm;
             background: #ffffff;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
             margin: 0 auto;
-            padding: 1.5mm 0;
+            padding: 1mm 0;
             box-sizing: border-box;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border-radius: 2px;
 
-            /* SEMUA label mengalir ke bawah dalam SATU halaman panjang
-               (tinggi @page = auto -> mengikuti total tinggi semua label),
-               dicetak sekali jalan tanpa tape terbuang antar label.
-               Cuma dijaga supaya 1 label tidak terpotong di tengah: */
+            /* Memaksa setiap blok berisi 3 stiker ini berpindah halaman cetak dengan rapi */
+            page-break-after: always;
+            break-after: page;
             page-break-inside: avoid;
             break-inside: avoid;
         }
@@ -71,14 +72,16 @@
                 width: 24mm;
                 box-shadow: none;
                 border-radius: 0;
+                page-break-after: always;
+                break-after: page;
             }
         }
 
-        /* ===== Styling stiker — satu-satunya definisi, dipakai untuk semua label di loop ===== */
+        /* ===== Styling stiker — sama seperti sebelumnya ===== */
         .stiker-container {
             box-sizing: border-box;
             width: 18.5mm;
-            margin: 0 auto;
+            margin: 0 auto 1.5mm auto; /* Jarak tipis antar stiker dalam 1 halaman */
             padding: 0.5mm;
             background: #ffffff;
             text-align: center;
@@ -86,14 +89,18 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Arial', Helvetica, sans-serif; /* dikunci -> tidak lagi terpengaruh Tailwind/reset browser */
+            font-family: 'Arial', Helvetica, sans-serif;
+        }
+
+        .stiker-container:last-child {
+            margin-bottom: 0; /* Stiker terakhir dalam 1 page tidak perlu margin bawah */
         }
 
         .stiker-container * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: inherit; /* semua anak elemen ikut font Arial, tidak ada yang bocor dari Tailwind */
+            font-family: inherit;
         }
 
         .brand-text {
@@ -142,16 +149,19 @@
 
     <div class="no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <h2 class="font-bold text-slate-800 text-lg mb-1">Siap Mencetak {{ $assets->count() }} QR Code</h2>
-        <p class="text-xs text-slate-500 mb-4">Semua label akan tercetak berurutan dalam satu strip panjang, tidak boros tape.</p>
+        <p class="text-xs text-slate-500 mb-4">Dikelompokkan menjadi 3 QR Code per halaman cetak.</p>
         <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md active:scale-95 text-sm cursor-pointer">
             🖨️ Cetak Sekarang
         </button>
     </div>
 
     <div class="print-preview-wrapper">
-        @foreach($assets as $asset)
+        {{-- Memecah koleksi aset menjadi kelompok berisi 3 item per halaman --}}
+        @foreach($assets->chunk(3) as $chunkedAssets)
             <div class="stiker-page">
-                @include('admin.assets.partials.qr-sticker', ['asset' => $asset])
+                @foreach($chunkedAssets as $asset)
+                    @include('admin.assets.partials.qr-sticker', ['asset' => $asset])
+                @endforeach
             </div>
         @endforeach
     </div>

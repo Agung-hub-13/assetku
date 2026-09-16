@@ -43,12 +43,14 @@
                 </div>
 
                 {{-- Dropdown 1: Lokasi Utama --}}
-                <div class="w-full sm:w-48">
-                    <select id="filter-lokasi" class="w-full text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                        <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Lokasi Utama</option>
+                <div class="w-full sm:w-80">
+                    <select id="filter-lokasi" name="lokasi" class="w-full text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Semua Lokasi</option>
                         @if(isset($filterLokasi))
                         @foreach($filterLokasi as $lokasi)
-                        <option value="{{ $lokasi->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">{{ $lokasi->name }}</option>
+                        <option value="{{ $lokasi->id }}" class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200" {{ request('lokasi') == $lokasi->id ? 'selected' : '' }}>
+                            {{ $lokasi->display_name ?? $lokasi->name }}
+                        </option>
                         @endforeach
                         @endif
                     </select>
