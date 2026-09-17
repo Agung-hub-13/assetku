@@ -44,7 +44,7 @@
 
             @can('asset.create')
             <button type="button" onclick="openCreateModal()"
-                class="hidden flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/10 active:scale-95 text-xs sm:text-sm flex-1 sm:flex-none">
+                class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/10 active:scale-95 text-xs sm:text-sm flex-1 sm:flex-none">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -972,6 +972,14 @@
 
         form.reset();
 
+        // PASTIKAN FIELD BISA DIKETIK (Hapus readonly saat mode Create)
+        ['a_number', 'a_asset_code', 'a_name'].forEach(id => {
+            const input = document.getElementById(id);
+            input.removeAttribute('readonly');
+            input.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'cursor-not-allowed', 'text-slate-400', 'dark:text-slate-500');
+            input.classList.add('bg-slate-50', 'dark:bg-slate-900', 'text-slate-700', 'dark:text-slate-200');
+        });
+
         // Reset Choices.js jika ada yang terpilih sebelumnya
         Object.keys(choicesInstances).forEach(id => {
             choicesInstances[id].setChoiceByValue('');
@@ -1006,6 +1014,14 @@
         document.getElementById('a_status').value = data.status ?? 'draft';
         document.getElementById('a_description').value = data.description ?? '';
         document.getElementById('a_purchase_date').value = data.purchase_date ? data.purchase_date.substring(0, 10) : '';
+
+        // SET READONLY KHUSUS SAAT MODE EDIT
+        ['a_number', 'a_asset_code', 'a_name'].forEach(id => {
+            const input = document.getElementById(id);
+            input.setAttribute('readonly', true);
+            input.classList.remove('bg-slate-50', 'dark:bg-slate-900', 'text-slate-700', 'dark:text-slate-200');
+            input.classList.add('bg-slate-100', 'dark:bg-slate-800', 'cursor-not-allowed', 'text-slate-400', 'dark:text-slate-500');
+        });
 
         // Mengatur nilai pilihan Choices.js secara dinamis saat tombol edit diklik
         if (choicesInstances['a_category']) choicesInstances['a_category'].setChoiceByValue(String(data.category_id ?? ''));
