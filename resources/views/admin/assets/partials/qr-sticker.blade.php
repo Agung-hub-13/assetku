@@ -51,25 +51,31 @@
     }
 @endphp
 
-<div class="stiker-item" style="display: inline-block; width: 24mm; vertical-align: top; text-align: center; box-sizing: border-box; padding: 2mm;">
-    <div class="brand-text" style="font-size: 7px; font-weight: bold; margin-bottom: 1px;">SLP</div>
+<div class="stiker-container" style="box-sizing: border-box; width: 22mm; margin: 0 auto 1mm auto; padding: 0.5mm; background: #ffffff; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Arial', Helvetica, sans-serif;">
     
-    <div class="qr-wrapper" style="margin: 0 auto;">
-        {{-- Ukuran QR code dikecilkan sedikit agar pas di lebar 24mm --}}
-        {!! QrCode::format('svg')->size(120)->margin(0)->errorCorrection('M')->generate($qrPayload) !!}
+    {{-- Brand / Logo --}}
+    <div class="brand-text" style="font-size: 6.5pt; font-weight: 800; color: #000000; margin-bottom: 0.5px; line-height: 1.0; text-transform: uppercase; width: 100%;">
+        SLP
     </div>
     
-    <div class="asset-code-text" style="font-size: 6.5px; font-weight: bold; line-height: 1.1; margin-top: 2px;">
+    {{-- QR Code (Dikecilkan sedikit ke size 75 agar sisa tempat untuk teks lebih lega) --}}
+    <div class="qr-wrapper" style="margin: 0 auto; width: 100%; line-height: 0;">
+        {!! QrCode::format('svg')->size(75)->margin(0)->errorCorrection('M')->generate($qrPayload) !!}
+    </div>
+    
+    {{-- Kode Aset --}}
+    <div class="asset-code-text" style="font-size: 6pt; font-weight: 900; color: #000000; line-height: 1.1; margin-top: 0.5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
         {{ $asset->asset_code ?? $asset->asset_number ?? '-' }}
     </div>
 
     {{-- Teks Lokasi Ringkas --}}
-    <div class="location-short-text" style="font-size: 4px; color: #444; line-height: 1.1; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+    <div class="location-short-text" style="font-size: 4.5pt; font-weight: 700; color: #000000; line-height: 1.1; margin-top: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
         {{ $locationShort }}
     </div>
 
     {{-- Teks Nama Aset Ringkas --}}
-    <div class="asset-name-text" style="font-size: 4px; color: #666; line-height: 1.1; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+    <div class="asset-name-text" style="font-size: 4.5pt; font-weight: 700; color: #000000; line-height: 1.1; margin-top: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
         {{ $cleanAssetName }}
     </div>
+
 </div>
