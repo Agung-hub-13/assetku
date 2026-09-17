@@ -8,14 +8,17 @@
 
     $qrPayload = route('assets.public-preview', $asset->qr_token);
 
-    // 📌 Logika Pemetaan Lokasi (Gedung, Lantai, Ruang, Nama Lokasi)
-    $locationShort = '-';
+    // 📌 Logika Nama Lokasi (Khusus untuk nama tempat/ruangan spesifik)
+    $locationName = '-';
+    if ($activeLocation && !empty($activeLocation->name) && $activeLocation->name !== '-') {
+        $locationName = $activeLocation->name;
+    }
+
+    // 📌 Logika Pemetaan Gedung, Lantai, & Ruang
+    $buildingInfo = '-';
     if ($activeLocation) {
         $chunks = [];
 
-        if (!empty($activeLocation->name) && $activeLocation->name !== '-') {
-            $chunks[] = $activeLocation->name;
-        }
         if (!empty($activeLocation->building) && $activeLocation->building !== '-') {
             $chunks[] = $activeLocation->building; 
         }
@@ -28,7 +31,7 @@
         }
 
         if (count($chunks) > 0) {
-            $locationShort = implode(' | ', $chunks);
+            $buildingInfo = implode(' | ', $chunks);
         }
     }
 
@@ -37,13 +40,10 @@
     $cleanAssetName = '-';
     
     if (!empty($rawAssetName)) {
-        // Hapus simbol berlebih agar bersih
         $nameTrimmed = trim($rawAssetName);
         $words = explode(' ', $nameTrimmed);
         
-        // Jika kata lebih dari 3 atau total karakter > 20, buat versi singkatnya yang rapi
         if (count($words) > 3 || strlen($nameTrimmed) > 20) {
-            // Opsi: Ambil maksimal 3 kata pertama agar tidak terlalu panjang, atau buat inisial
             $cleanAssetName = implode(' ', array_slice($words, 0, 3)); 
         } else {
             $cleanAssetName = $nameTrimmed;
@@ -51,29 +51,34 @@
     }
 @endphp
 
-<div class="stiker-container" style="box-sizing: border-box; width: 22mm; margin: 0 auto 1mm auto; padding: 0.5mm; background: #ffffff; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Arial', Helvetica, sans-serif;">
+<div class="stiker-container" style="box-sizing: border-box; width: 19.5mm; margin: 0 auto 1mm auto; padding: 0.5mm 1mm; background: #ffffff; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Arial', Helvetica, sans-serif;">
     
     {{-- Brand / Logo --}}
-    <div class="brand-text" style="font-size: 6.5pt; font-weight: 800; color: #000000; margin-bottom: 0.5px; line-height: 1.0; text-transform: uppercase; width: 100%;">
+    <div class="brand-text" style="font-size: 7pt; font-weight: 800; color: #000000; margin-bottom: 0.5px; line-height: 1.0; text-transform: uppercase; width: 100%;">
         SLP
     </div>
     
-    {{-- QR Code (Dikecilkan sedikit ke size 75 agar sisa tempat untuk teks lebih lega) --}}
+    {{-- QR Code (Dikecilkan sedikit ke size 65 agar muat tambahan 1 baris teks) --}}
     <div class="qr-wrapper" style="margin: 0 auto; width: 100%; line-height: 0;">
-        {!! QrCode::format('svg')->size(75)->margin(0)->errorCorrection('M')->generate($qrPayload) !!}
+        {!! QrCode::format('svg')->size(65)->margin(0)->errorCorrection('M')->generate($qrPayload) !!}
     </div>
     
-    {{-- Kode Aset --}}
-    <div class="asset-code-text" style="font-size: 6pt; font-weight: 900; color: #000000; line-height: 1.1; margin-top: 0.5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+    {{-- 1. Kode Aset (Utama) --}}
+    <div class="asset-code-text" style="font-size: 6.5pt; font-weight: 900; color: #000000; line-height: 1.1; margin-top: 1px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
         {{ $asset->asset_code ?? $asset->asset_number ?? '-' }}
     </div>
 
-    {{-- Teks Lokasi Ringkas --}}
-    <div class="location-short-text" style="font-size: 4.5pt; font-weight: 700; color: #000000; line-height: 1.1; margin-top: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
-        {{ $locationShort }}
+    {{-- 2. Nama Lokasi (Tepat di bawah Kode Aset) --}}
+    <div class="location-name-text" style="font-size: 4.5pt; font-weight: 700; color: #000000; line-height: 1.1; margin-top: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+        {{ $locationName }}
     </div>
 
-    {{-- Teks Nama Aset Ringkas --}}
+    {{-- 3. Gedung, Lantai, Ruang (Di bawah Nama Lokasi) --}}
+    <div class="location-building-text" style="font-size: 4.5pt; font-weight: 700; color: #000000; line-height: 1.1; margin-top: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
+        {{ $buildingInfo }}
+    </div>
+
+    {{-- 4. Nama Aset Ringkas (Paling Bawah) --}}
     <div class="asset-name-text" style="font-size: 4.5pt; font-weight: 700; color: #000000; line-height: 1.1; margin-top: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">
         {{ $cleanAssetName }}
     </div>
