@@ -44,7 +44,7 @@
 
             @can('asset.create')
             <button type="button" onclick="openCreateModal()"
-                class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/10 active:scale-95 text-xs sm:text-sm flex-1 sm:flex-none">
+                class="hidden flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-600/10 active:scale-95 text-xs sm:text-sm flex-1 sm:flex-none">
                 <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
