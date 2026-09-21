@@ -18,25 +18,26 @@ class AssetLocationController extends Controller
     {
         $user = auth()->user();
 
-        // Mengambil daftar nama lokasi unik untuk pilihan dropdown filter (disesuaikan dengan hak akses user)
+        // 1. Ambil ID lokasi yang di-assign ke user yang sedang login via pivot
+        $userLocationIds = $user->hasRole('Super Admin')
+            ? []
+            : $user->locations()->pluck('asset_locations.id');
+
+        // 2. Mengambil daftar nama lokasi unik untuk pilihan dropdown filter
         $filterLocationsQuery = AssetLocation::select('name')
             ->distinct()
             ->orderBy('name', 'asc');
 
-        if (!$user->hasRole('Super Admin') && !empty($user->asset_location_id)) {
-            $filterLocationsQuery->where('id', $user->asset_location_id);
+        if (!$user->hasRole('Super Admin')) {
+            $filterLocationsQuery->whereIn('id', $userLocationIds);
         }
         $filterLocations = $filterLocationsQuery->pluck('name');
 
         $query = AssetLocation::query();
 
-        // Filter otomatis berdasarkan hak akses user
+        // 3. Filter otomatis berdasarkan hak akses user (Many-to-Many)
         if (!$user->hasRole('Super Admin')) {
-            if (!empty($user->asset_location_id)) {
-                // Jika user memiliki lokasi spesifik, batasi hanya lokasi tersebut
-                $query->where('id', $user->asset_location_id);
-            }
-            // Jika asset_location_id bernilai NULL (kosong), user dianggap bisa melihat SEMUA lokasi
+            $query->whereIn('id', $userLocationIds);
         }
 
         // Fitur Pencarian Data (Case-Insensitive untuk huruf besar/kecil acak)

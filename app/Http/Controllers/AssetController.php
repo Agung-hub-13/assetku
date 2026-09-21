@@ -68,12 +68,19 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
+        $user = auth()->user();
+
+        // 0. Ambil ID lokasi yang di-assign ke user yang sedang login via pivot
+        $userLocationIds = $user->hasRole('Super Admin')
+            ? []
+            : $user->locations()->pluck('asset_locations.id');
+
         // 1. Eager Loading Relasi
         $query = Asset::with([
             'location:id,name,building,floor,room',
             'category:id,name',
             'department:id,name',
-            'user:id,name', // <-- Opsional: Tambahkan relasi user agar bisa di-load jika diperlukan
+            'user:id,name',
             'transfer' => function ($q) {
                 $q->latest();
             },
@@ -81,6 +88,11 @@ class AssetController extends Controller
             'activeLoan.user:id,name',
             'activeMaintenance.technician:id,name',
         ]);
+
+        // 1.1 Batasi data aset berdasarkan lokasi user (Jika bukan Super Admin)
+        if (!$user->hasRole('Super Admin')) {
+            $query->whereIn('location_id', $userLocationIds);
+        }
 
         // 2. Filter Search (PostgreSQL Case-Insensitive ILIKE)
         if ($request->filled('search')) {
@@ -94,7 +106,6 @@ class AssetController extends Controller
                     ->orWhere('accurate_no', 'ilike', "%{$search}%")
                     ->orWhere('description', 'ilike', "%{$search}%")
                     ->orWhereHas('location', function ($locationQuery) use ($search) {
-                        // Perbaiki bagian ini agar mencakup nama, gedung, lantai, dan ruangan
                         $locationQuery->where('name', 'ilike', "%{$search}%")
                             ->orWhere('building', 'ilike', "%{$search}%")
                             ->orWhere('floor', 'ilike', "%{$search}%")
@@ -109,7 +120,14 @@ class AssetController extends Controller
         }
 
         if ($request->filled('room_id')) {
-            $query->where('location_id', $request->room_id);
+            // Pastikan user tidak memfilter ruangan di luar hak aksesnya
+            $roomId = $request->room_id;
+            if ($user->hasRole('Super Admin') || $userLocationIds->contains($roomId)) {
+                $query->where('location_id', $roomId);
+            } else {
+                // Jika mencoba memfilter ruangan yang tidak diizinkan, paksa hasil kosong
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($request->filled('status')) {
@@ -136,27 +154,25 @@ class AssetController extends Controller
             ->paginate(50)
             ->appends($request->all());
 
-        // 6. Data Master untuk Options (Tanpa parent_id)
-        $locations = AssetLocation::select('id', 'name', 'code', 'building', 'floor', 'room')
-            ->orderBy('building', 'asc')
+        // 6. Data Master untuk Options (Disesuaikan dengan hak akses lokasi user)
+        $locationsQuery = AssetLocation::select('id', 'name', 'code', 'building', 'floor', 'room');
+
+        if (!$user->hasRole('Super Admin')) {
+            $locationsQuery->whereIn('id', $userLocationIds);
+        }
+
+        $locations = $locationsQuery->orderBy('building', 'asc')
             ->orderBy('floor', 'asc')
             ->orderBy('name', 'asc')
             ->get()
             ->map(function ($lok) {
-                // Jika kolom building, floor, dan room lengkap terisi
                 if (!empty($lok->building) && !empty($lok->floor) && !empty($lok->room)) {
                     $lok->display_name = $lok->building . ' — Lantai ' . $lok->floor . ' — Ruang ' . $lok->room;
-                }
-                // Jika hanya ada building dan room (tanpa lantai)
-                elseif (!empty($lok->building) && !empty($lok->room)) {
+                } elseif (!empty($lok->building) && !empty($lok->room)) {
                     $lok->display_name = $lok->building . ' — Ruang ' . $lok->room;
-                }
-                // Jika hanya ada building saja (level gedung)
-                elseif (!empty($lok->building) && empty($lok->room) && empty($lok->floor)) {
+                } elseif (!empty($lok->building) && empty($lok->room) && empty($lok->floor)) {
                     $lok->display_name = $lok->building;
-                }
-                // Default fallback menggunakan name asli dari database jika kolom rincian kosong
-                else {
+                } else {
                     $lok->display_name = $lok->name;
                 }
 
@@ -179,7 +195,6 @@ class AssetController extends Controller
 
         $departments = Department::select('id', 'name')->orderBy('name')->get();
 
-        // 👇 TAMBAHKAN INI: Ambil data users agar dropdown tidak kosong
         $users = \App\Models\User::select('id', 'name')->orderBy('name')->get();
 
         // 7. Penentuan View Path
@@ -195,7 +210,7 @@ class AssetController extends Controller
             'transfers',
             'categories',
             'departments',
-            'users' // 👇 MASUKKAN KE COMPACT
+            'users'
         ));
     }
 
