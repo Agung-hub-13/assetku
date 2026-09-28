@@ -33,7 +33,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl p-5 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs">
             <div class="space-y-1">
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 mb-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
                     <span>PT SLP Directory</span>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Manajemen Pengguna</h1>
@@ -90,9 +92,14 @@
             <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/60">
                 @forelse($users as $user)
                 @php
-                    // Ambil lokasi user (asumsi relasi / accessor locations / location berupa array atau string)
-                    $userLocations = method_exists($user, 'locations') ? $user->locations->pluck('name')->toArray() : (is_array($user->location ?? null) ? $user->location : explode(',', $user->location ?? ''));
-                    $userLocations = array_filter(array_map('trim', $userLocations));
+                $userLocs = method_exists($user, 'locations') ? $user->locations : collect();
+                $totalLocsCount = $userLocs->count();
+                $groupedUserLocs = $userLocs->groupBy(fn($l) => is_object($l) ? ($l->name ?? 'Lokasi') : $l);
+
+                $locIds = method_exists($user, 'locations') ? $user->locations->pluck('id')->toArray() : [];
+                if(empty($locIds) && !empty($user->location)) {
+                $locIds = is_array($user->location) ? $user->location : explode(',', $user->location);
+                }
                 @endphp
                 <div class="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <div class="flex items-center justify-between gap-3">
@@ -108,13 +115,6 @@
 
                         <!-- Action Mobile Buttons -->
                         <div class="flex items-center gap-1 shrink-0">
-                            @php
-                                $locIds = method_exists($user, 'locations') ? $user->locations->pluck('id')->toArray() : [];
-                                if(empty($locIds) && !empty($user->location)) {
-                                    // Fallback jika berupa string comma-separated atau nama
-                                    $locIds = $user->location; 
-                                }
-                            @endphp
                             <button @click="openEditModal({{ json_encode($user) }}, {{ json_encode($user->roles->pluck('id')) }}, {{ json_encode($locIds) }})"
                                 class="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-xl transition" title="Edit">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,15 +145,23 @@
 
                     <div class="space-y-2">
                         <div>
-                            <span class="text-slate-400 block text-xs font-semibold mb-1 uppercase tracking-wider">Lokasi Akses</span>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Lokasi Akses</span>
+                                @if($totalLocsCount > 0)
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">{{ $totalLocsCount }} Ruangan</span>
+                                @endif
+                            </div>
                             <div class="flex flex-wrap gap-1">
-                                @forelse($userLocations as $loc)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                    {{ is_array($loc) ? ($loc['name'] ?? '') : $loc }}
+                                @if($totalLocsCount > 0)
+                                @foreach($groupedUserLocs as $groupName => $rooms)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/40">
+                                    <span>📍 {{ $groupName }}</span>
+                                    <span class="bg-indigo-200/60 dark:bg-indigo-800/60 px-1 rounded text-[10px]">{{ $rooms->count() }}</span>
                                 </span>
-                                @empty
-                                <span class="text-xs text-slate-400 italic">Semua Lokasi / Tidak ada</span>
-                                @endforelse
+                                @endforeach
+                                @else
+                                <span class="text-xs text-slate-400 italic">Semua Lokasi / Global</span>
+                                @endif
                             </div>
                         </div>
                         <div>
@@ -193,10 +201,11 @@
                     <tbody class="text-sm text-slate-700 dark:text-slate-200 divide-y divide-slate-100 dark:divide-slate-800/60">
                         @forelse($users as $user)
                         @php
-                            $userLocations = method_exists($user, 'locations') ? $user->locations->pluck('name')->toArray() : (is_array($user->location ?? null) ? $user->location : explode(',', $user->location ?? ''));
-                            $userLocations = array_filter(array_map('trim', $userLocations));
+                        $userLocs = method_exists($user, 'locations') ? $user->locations : collect();
+                        $totalLocsCount = $userLocs->count();
+                        $groupedUserLocs = $userLocs->groupBy(fn($l) => is_object($l) ? ($l->name ?? 'Lokasi') : $l);
 
-                            $locIds = method_exists($user, 'locations') ? $user->locations->pluck('id')->toArray() : [];
+                        $locIds = method_exists($user, 'locations') ? $user->locations->pluck('id')->toArray() : [];
                         @endphp
                         <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors align-middle">
                             <!-- Name & Email -->
@@ -224,17 +233,27 @@
                                 </span>
                             </td>
 
-                            <!-- Multi Locations -->
+                            <!-- Multi Locations Summary -->
+                            <!-- Di dalam Mobile View & Desktop Table View -->
                             <td class="px-6 py-4">
-                                <div class="flex flex-wrap gap-1 max-w-xs">
-                                    @forelse($userLocations as $loc)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/40 dark:border-slate-700/50">
-                                        {{ is_array($loc) ? ($loc['name'] ?? '') : $loc }}
-                                    </span>
-                                    @empty
-                                    <span class="text-xs text-slate-400 italic">Semua Lokasi / Global</span>
-                                    @endforelse
-                                </div>
+                                @php
+                                $userLocs = method_exists($user, 'locations') ? $user->locations : collect();
+                                $totalLocsCount = $userLocs->count();
+                                @endphp
+
+                                @if($totalLocsCount > 0)
+                                <button @click='openLocationDetailModal({{ json_encode($user->name) }}, {!! json_encode($userLocs->map(fn($l) => is_object($l) ? (($l->name ?? ' Lokasi') . (!empty($l->floor) ? " - Lantai {$l->floor}" : "") . (!empty($l->room) ? " - Ruang {$l->room}" : "")) : $l)) !!})'
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    <span>{{ $totalLocsCount }} Lokasi Akses</span>
+                                    <span class="bg-indigo-200/70 dark:bg-indigo-800/70 px-1.5 py-0.2 rounded text-[10px]">Lihat</span>
+                                </button>
+                                @else
+                                <span class="text-xs text-slate-400 italic">Semua Lokasi / Global</span>
+                                @endif
                             </td>
 
                             <!-- Roles -->
@@ -375,30 +394,71 @@
                         </div>
                     </div>
 
-                    <!-- MULTI LOKASI CHECKBOX (Pilih 1, 2, atau Semua Lokasi Sekaligus) -->
+                    <!-- MULTI LOKASI CHECKBOX (Sinkron Dua Arah / Two-Way Binding) -->
                     <div>
+                        @php
+                        $groupedLocations = $locations->groupBy(function($loc) {
+                        return !empty($loc->name) ? $loc->name : 'Tanpa Nama Lokasi';
+                        });
+                        @endphp
+
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Akses Multi-Lokasi</label>
                             <button type="button" @click="toggleAllLocations()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 <span x-text="isAllLocationsSelected() ? 'Batalkan Semua' : 'Pilih Semua Lokasi'"></span>
                             </button>
                         </div>
-                        <div class="border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3.5 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
-                                @foreach($locations as $loc)
-                                @php
-                                    $locId = is_object($loc) ? ($loc->id ?? $loc->name) : $loc;
-                                    $locName = is_object($loc) ? ($loc->name ?? $loc->id) : $loc;
-                                @endphp
-                                <label class="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100/80 dark:hover:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 cursor-pointer select-none transition">
-                                    <input type="checkbox" name="locations[]" value="{{ $locId }}" x-model="formData.locations"
-                                        class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-700">
-                                    <span class="font-medium truncate">{{ $locName }}</span>
-                                </label>
-                                @endforeach
+
+                        <div class="border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3.5 bg-slate-50/50 dark:bg-slate-800/40 space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                            @foreach($groupedLocations as $locationName => $groupLocs)
+                            @php
+                            $groupLocIds = $groupLocs->map(fn($l) => (string) (is_object($l) ? ($l->id ?? $l->name) : $l))->toJson();
+                            @endphp
+
+                            <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 bg-white dark:bg-slate-900/50 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <!-- Checkbox Induk Nama Lokasi (Sinkron Dua Arah) -->
+                                    <label class="flex items-center gap-2.5 text-sm font-semibold text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+                                        <input type="checkbox"
+                                            @change='toggleLocationGroup({!! $groupLocIds !!})'
+                                            :checked='isLocationGroupSelected({!! $groupLocIds !!})'
+                                            class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-700 cursor-pointer">
+                                        <span>📍 {{ $locationName }} <span class="text-xs font-normal text-slate-400">({{ $groupLocs->count() }} Ruangan/Sub-lokasi)</span></span>
+                                    </label>
+
+                                    <!-- Tombol Accordion Detail Sub-Lokasi -->
+                                    <button type="button" @click="toggleSubLocationGroup('{{ $locationName }}')" class="text-xs text-indigo-500 hover:underline flex items-center gap-1">
+                                        <span x-text="openSubLocations['{{ $locationName }}'] ? 'Sembunyikan Detail' : 'Atur Detail'"></span>
+                                        <svg class="w-3.5 h-3.5 transform transition-transform" :class="openSubLocations['{{ $locationName }}'] ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- List Sub-lokasi Spesifik -->
+                                <div x-show="openSubLocations['{{ $locationName }}']" x-transition class="pl-6 pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    @foreach($groupLocs as $loc)
+                                    @php
+                                    $locId = (string) (is_object($loc) ? ($loc->id ?? $loc->name) : $loc);
+                                    @endphp
+                                    <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+                                        <input type="checkbox" name="locations[]" value="{{ $locId }}" x-model="formData.locations"
+                                            class="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-700">
+                                        <span class="truncate">
+                                            @if(is_object($loc) && !empty($loc->floor) && !empty($loc->room))
+                                            Lantai {{ $loc->floor }} — Ruang {{ $loc->room }}
+                                            @elseif(is_object($loc) && !empty($loc->room))
+                                            Ruang {{ $loc->room }}
+                                            @else
+                                            {{ is_object($loc) ? ($loc->name ?? $loc->id) : $loc }}
+                                            @endif
+                                        </span>
+                                    </label>
+                                    @endforeach
+                                </div>
                             </div>
+                            @endforeach
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-1">Centang satu, beberapa, atau seluruh lokasi agar user memiliki hak akses operasional terkait.</p>
                     </div>
 
                     <!-- Roles Checkbox -->
@@ -458,7 +518,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            
+
             <div class="space-y-1">
                 <h3 class="font-extrabold text-slate-900 dark:text-white text-lg">Hapus Pengguna?</h3>
                 <p class="text-sm text-slate-500 dark:text-slate-400">Apakah Anda yakin ingin menghapus akun <span class="font-bold text-slate-800 dark:text-slate-200" x-text="deleteUserName"></span>? Tindakan ini tidak dapat dibatalkan.</p>
@@ -474,6 +534,66 @@
                     Ya, Hapus
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DETAIL LOKASI PENGGUNA               -->
+    <!-- ========================================== -->
+    <div x-show="isLocationDetailOpen" x-cloak
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+
+        <div @click.away="isLocationDetailOpen = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+            x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+            class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[80vh] my-auto">
+
+            <!-- Header Modal -->
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">Daftar Lokasi Akses</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400" x-text="'Pengguna: ' + activeUserName"></p>
+                    </div>
+                </div>
+                <button @click="isLocationDetailOpen = false" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body List Lokasi -->
+            <div class="p-6 overflow-y-auto space-y-2 flex-1 custom-scrollbar">
+                <template x-for="(loc, index) in activeUserLocations" :key="index">
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                        <span class="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-xs shrink-0" x-text="index + 1"></span>
+                        <span class="font-medium" x-text="loc"></span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-6 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button @click="isLocationDetailOpen = false" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition">
+                    Tutup
+                </button>
+            </div>
         </div>
     </div>
 
@@ -517,7 +637,14 @@
             formAction: '',
             deleteAction: '',
             deleteUserName: '',
-            allLocationIds: @json($locations->map(fn($l) => is_object($l) ? ($l->id ?? $l->name) : $l)),
+            openSubLocations: {},
+            isLocationDetailOpen: false,
+            activeUserName: '',
+            activeUserLocations: [],
+
+            // Menyimpan seluruh ID lokasi secara global (Sudah diperbaiki)
+            allLocationIds: @json($locations->map(fn($l) => (string)(is_object($l) ? ($l->id ?? $l->name) :$l))),
+
             formData: {
                 id: null,
                 name: '',
@@ -552,7 +679,7 @@
                     email: user.email,
                     phone: user.phone ?? '',
                     department_id: user.department_id ?? '',
-                    locations: userLocationIds ?? [],
+                    locations: (userLocationIds ?? []).map(id => String(id)),
                     roles: userRoleIds ?? []
                 };
                 this.isFormOpen = true;
@@ -564,16 +691,46 @@
                 this.isDeleteOpen = true;
             },
 
+            openLocationDetailModal(userName, locations) {
+                this.activeUserName = userName;
+                this.activeUserLocations = locations;
+                this.isLocationDetailOpen = true;
+            },
+
+            // Toggle buka/tutup accordion per kelompok nama lokasi
+            toggleSubLocationGroup(locationName) {
+                this.openSubLocations[locationName] = !this.openSubLocations[locationName];
+            },
+
+            // Cek apakah seluruh sub-lokasi di satu kelompok sudah tercentang
+            isLocationGroupSelected(groupLocationIds) {
+                if (!groupLocationIds.length) return false;
+                return groupLocationIds.every(id => this.formData.locations.includes(String(id)));
+            },
+
+            // Pilih / Batalkan seluruh sub-lokasi di dalam satu kelompok nama lokasi sekaligus
+            toggleLocationGroup(groupLocationIds) {
+                const strGroupIds = groupLocationIds.map(id => String(id));
+                const allSelected = this.isLocationGroupSelected(strGroupIds);
+
+                if (allSelected) {
+                    this.formData.locations = this.formData.locations.filter(id => !strGroupIds.includes(String(id)));
+                } else {
+                    const combined = new Set([...this.formData.locations, ...strGroupIds]);
+                    this.formData.locations = Array.from(combined);
+                }
+            },
+
             isAllLocationsSelected() {
                 if (this.allLocationIds.length === 0) return false;
-                return this.allLocationIds.every(id => this.formData.locations.includes(id));
+                return this.allLocationIds.every(id => this.formData.locations.includes(String(id)));
             },
 
             toggleAllLocations() {
                 if (this.isAllLocationsSelected()) {
                     this.formData.locations = [];
                 } else {
-                    this.formData.locations = [...this.allLocationIds];
+                    this.formData.locations = this.allLocationIds.map(id => String(id));
                 }
             }
         }
