@@ -127,6 +127,29 @@ class AssetAuditController extends Controller
         return view('admin.asset_audits.show', compact('audit'));
     }
 
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'title'       => 'required|string|max:255',
+            'location_id' => 'nullable|exists:asset_locations,id',
+            'auditor_id'  => 'required|exists:users,id',
+            'status'      => 'required|in:in_progress,completed,draft,canceled',
+            'notes'       => 'nullable|string',
+        ]);
+
+        $audit = AssetAudit::findOrFail($id);
+        $audit->update([
+            'title'       => $request->title,
+            'location_id' => $request->location_id,
+            'auditor_id'  => $request->auditor_id,
+            'status'      => $request->status,
+            'notes'       => $request->notes,
+        ]);
+
+        return redirect()->route('admin.asset_audits.index')
+            ->with('success', 'Sesi audit berhasil diperbarui.');
+    }
+
     // Update Status Fisik Item Aset (Individual/Bulk)
     public function updateItem(Request $request, $itemId)
     {

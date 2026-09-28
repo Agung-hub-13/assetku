@@ -91,7 +91,10 @@ class AssetController extends Controller
 
         // 1.1 Batasi data aset berdasarkan lokasi user (Jika bukan Super Admin)
         if (!$user->hasRole('Super Admin')) {
-            $query->whereIn('location_id', $userLocationIds);
+            $query->where(function ($q) use ($userLocationIds) {
+                $q->whereIn('location_id', $userLocationIds)
+                  ->orWhereNull('location_id');
+            });
         }
 
         // 2. Filter Search (PostgreSQL Case-Insensitive ILIKE)

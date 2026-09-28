@@ -18,6 +18,9 @@ class AssetLocationController extends Controller
     {
         $user = auth()->user();
 
+        // WAJIB: Hapus cache relasi agar data lokasi baru langsung terbaca
+        $user->unsetRelation('locations');
+
         // 1. Ambil ID lokasi yang di-assign ke user yang sedang login via pivot
         $userLocationIds = $user->hasRole('Super Admin')
             ? []
@@ -76,7 +79,7 @@ class AssetLocationController extends Controller
     {
         try {
             return DB::transaction(function () use ($request) {
-                // 1. Generate Kode Lokasi Otomatis saat Simpan (Berdiri sendiri / flat)
+                // 1. Generate Kode Lokasi Otomatis saat Simpan
                 $code = $this->generateLocationCode();
 
                 $request->merge([
@@ -88,7 +91,7 @@ class AssetLocationController extends Controller
                     'input_payload'  => $request->except(['_token'])
                 ]);
 
-                // 2. Validasi Input (disesuaikan dengan kolom database murni)
+                // 2. Validasi Input
                 $validated = $request->validate([
                     'name'     => 'required|string|max:255',
                     'code'     => ['required', 'string', 'max:50', Rule::unique('asset_locations', 'code')],
@@ -101,8 +104,16 @@ class AssetLocationController extends Controller
                     'code.unique' => 'Kode lokasi "' . $code . '" sudah terdaftar. Silakan coba lagi.',
                 ]);
 
-                // 3. Simpan Data
+                // 3. Simpan Data Lokasi
                 $location = AssetLocation::create($validated);
+
+                // --- TAMBAHKAN BAGIAN INI ---
+                // Jika yang membuat bukan Super Admin, otomatis attach lokasi baru ke user yang login
+                $user = auth()->user();
+                if (!$user->hasRole('Super Admin')) {
+                    $user->locations()->attach($location->id);
+                }
+                // ----------------------------
 
                 Log::info('Berhasil menyimpan lokasi aset baru.', [
                     'id'   => $location->id,
