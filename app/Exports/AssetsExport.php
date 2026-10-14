@@ -32,6 +32,13 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
      */
     public function collection()
     {
+        $user = auth()->user();
+
+        // 0. Ambil ID lokasi user jika bukan Super Admin (Menyamakan dengan AssetController)
+        $userLocationIds = $user && $user->hasRole('Super Admin')
+            ? []
+            : ($user ? $user->locations()->pluck('asset_locations.id') : collect());
+
         $query = Asset::query();
 
         // Eager Loading relasi krusial secara lengkap
@@ -41,75 +48,54 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
             'transfer.toLocation.parent'
         ]);
 
-        // 1. Filter Berdasarkan Text Search (Menggunakan 'ilike' agar aman di Postgres & MySQL)
+        // Batasi data aset berdasarkan lokasi user (Jika bukan Super Admin)
+        if ($user && !$user->hasRole('Super Admin')) {
+            $query->where(function ($q) use ($userLocationIds) {
+                $q->whereIn('location_id', $userLocationIds)
+                    ->orWhereNull('location_id');
+            });
+        }
+
+        // 1. Filter Berdasarkan Text Search (Sinkron dengan Controller menggunakan ilike)
         if ($this->request->filled('search')) {
-            $search = trim($this->request->search);
+            $search = $this->request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
+                $q->where('assets.name', 'ilike', "%{$search}%")
                     ->orWhere('asset_code', 'ilike', "%{$search}%")
                     ->orWhere('asset_number', 'ilike', "%{$search}%")
                     ->orWhere('serial_number', 'ilike', "%{$search}%")
                     ->orWhere('accurate_no', 'ilike', "%{$search}%")
                     ->orWhere('description', 'ilike', "%{$search}%")
                     ->orWhereHas('location', function ($locationQuery) use ($search) {
-                        $locationQuery->where('name', 'ilike', "%{$search}%");
+                        $locationQuery->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('building', 'ilike', "%{$search}%")
+                            ->orWhere('floor', 'ilike', "%{$search}%")
+                            ->orWhere('room', 'ilike', "%{$search}%");
                     });
             });
         }
 
-        // 2. Filter Berdasarkan Dropdown Kategori
+        // 2. Filter Kategori
         if ($this->request->filled('category_id')) {
             $query->where('category_id', $this->request->category_id);
         }
 
-        // 3. Filter Berdasarkan Dropdown Lokasi Utama
-        if ($this->request->filled('location_id')) {
-            $query->where('location_id', $this->request->location_id);
-        }
-
-        // 4. Filter Sub-Lokasi: Departemen
-        if ($this->request->filled('department_id')) {
-            $deptSearch = trim($this->request->department_id);
-            $query->whereHas('location', function ($q) use ($deptSearch) {
-                $q->where(function ($subQuery) use ($deptSearch) {
-                    $subQuery->where('department_name', 'ilike', "%{$deptSearch}%");
-                    if (is_numeric($deptSearch)) {
-                        $subQuery->orWhere('department_id', $deptSearch);
-                    }
-                });
-            });
-        }
-
-        // 5. Filter Sub-Lokasi: Lantai
-        if ($this->request->filled('floor_id')) {
-            $floorSearch = trim($this->request->floor_id);
-            $query->whereHas('location', function ($q) use ($floorSearch) {
-                $q->where('floor', 'ilike', "%{$floorSearch}%");
-            });
-        }
-
-        // 6. Filter Sub-Lokasi: Ruangan
+        // 3. Filter Ruangan / Lokasi
         if ($this->request->filled('room_id')) {
-            $roomSearch = trim($this->request->room_id);
-            $query->whereHas('location', function ($q) use ($roomSearch) {
-                $q->where('room', 'ilike', "%{$roomSearch}%");
-            });
+            $roomId = $this->request->room_id;
+            if ($user && ($user->hasRole('Super Admin') || $userLocationIds->contains($roomId))) {
+                $query->where('location_id', $roomId);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
-        // 7. Filter Berdasarkan Dropdown Departemen Akurat
-        if ($this->request->filled('accurate_department_id')) {
-            $accurateDeptId = $this->request->accurate_department_id;
-            $query->whereHas('location', function ($q) use ($accurateDeptId) {
-                $q->where('accurate_department_id', $accurateDeptId);
-            });
-        }
-
-        // 8. Filter Berdasarkan Dropdown Status
+        // 4. Filter Status
         if ($this->request->filled('status')) {
             $query->where('status', $this->request->status);
         }
 
-        // 9. Filter Berdasarkan Nilai Buku Habis (Card Clickable)
+        // 5. Filter Nilai Buku Habis
         if ($this->request->get('depreciated') == '1') {
             $query->where('book_value', '<=', 0);
         }
