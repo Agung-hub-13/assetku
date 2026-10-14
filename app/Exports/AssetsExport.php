@@ -41,18 +41,18 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
             'transfer.toLocation.parent'
         ]);
 
-        // 1. Filter Berdasarkan Text Search (SINKRON DENGAN CONTROLLER)
+        // 1. Filter Berdasarkan Text Search (Menggunakan 'ilike' agar aman di Postgres & MySQL)
         if ($this->request->filled('search')) {
-            $search = strtolower($this->request->search);
+            $search = trim($this->request->search);
             $query->where(function ($q) use ($search) {
-                $q->whereRaw('LOWER(assets.name) like ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(asset_code) like ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(asset_number) like ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(serial_number) like ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(accurate_no) like ?', ["%{$search}%"])
-                    ->orWhereRaw('LOWER(description) like ?', ["%{$search}%"])
+                $q->where('name', 'ilike', "%{$search}%")
+                    ->orWhere('asset_code', 'ilike', "%{$search}%")
+                    ->orWhere('asset_number', 'ilike', "%{$search}%")
+                    ->orWhere('serial_number', 'ilike', "%{$search}%")
+                    ->orWhere('accurate_no', 'ilike', "%{$search}%")
+                    ->orWhere('description', 'ilike', "%{$search}%")
                     ->orWhereHas('location', function ($locationQuery) use ($search) {
-                        $locationQuery->whereRaw('LOWER(name) like ?', ["%{$search}%"]);
+                        $locationQuery->where('name', 'ilike', "%{$search}%");
                     });
             });
         }
@@ -69,10 +69,10 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
 
         // 4. Filter Sub-Lokasi: Departemen
         if ($this->request->filled('department_id')) {
-            $deptSearch = strtolower($this->request->department_id);
+            $deptSearch = trim($this->request->department_id);
             $query->whereHas('location', function ($q) use ($deptSearch) {
                 $q->where(function ($subQuery) use ($deptSearch) {
-                    $subQuery->whereRaw('LOWER(department_name) like ?', ["%{$deptSearch}%"]);
+                    $subQuery->where('department_name', 'ilike', "%{$deptSearch}%");
                     if (is_numeric($deptSearch)) {
                         $subQuery->orWhere('department_id', $deptSearch);
                     }
@@ -82,25 +82,23 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
 
         // 5. Filter Sub-Lokasi: Lantai
         if ($this->request->filled('floor_id')) {
-            $floorSearch = strtolower($this->request->floor_id);
+            $floorSearch = trim($this->request->floor_id);
             $query->whereHas('location', function ($q) use ($floorSearch) {
-                $q->whereRaw('LOWER(floor) like ?', ["%{$floorSearch}%"]);
+                $q->where('floor', 'ilike', "%{$floorSearch}%");
             });
         }
 
         // 6. Filter Sub-Lokasi: Ruangan
         if ($this->request->filled('room_id')) {
-            $roomSearch = strtolower($this->request->room_id);
+            $roomSearch = trim($this->request->room_id);
             $query->whereHas('location', function ($q) use ($roomSearch) {
-                $q->whereRaw('LOWER(room) like ?', ["%{$roomSearch}%"]);
+                $q->where('room', 'ilike', "%{$roomSearch}%");
             });
         }
 
         // 7. Filter Berdasarkan Dropdown Departemen Akurat
-        // 7. Filter Berdasarkan Dropdown Departemen Akurat
         if ($this->request->filled('accurate_department_id')) {
             $accurateDeptId = $this->request->accurate_department_id;
-
             $query->whereHas('location', function ($q) use ($accurateDeptId) {
                 $q->where('accurate_department_id', $accurateDeptId);
             });
