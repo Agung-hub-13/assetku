@@ -104,7 +104,7 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
     }
 
     /**
-     * Mendefinisikan header kolom spreadsheet XLSX.
+     * Mendefinisikan header kolom spreadsheet XLSX (Total: 18 Kolom).
      */
     public function headings(): array
     {
@@ -131,7 +131,7 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
     }
 
     /**
-     * Memetakan properti setiap model Asset ke dalam baris kolom spreadsheet.
+     * Memetakan properti setiap model Asset ke dalam baris kolom spreadsheet (Pas 18 Kolom).
      */
     public function map($asset): array
     {
@@ -160,7 +160,6 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
                 '-', // Gedung
                 '-', // Lantai
                 '-', // Ruang
-                '-', // Deskripsi Lokasi
                 '-', // PIC Lokasi
                 '-', // Departemen
                 $asset->purchase_date ? Carbon::parse($asset->purchase_date)->format('d M Y') : '-',
@@ -173,29 +172,21 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
             ];
         }
 
-        /**
-         * Memetakan struktur hirarki Lokasi, Gedung, Lantai, dan Ruang.
-         * Sesuaikan bagian ini jika struktur database Anda menggunakan relasi parent/child atau kolom langsung pada tabel locations.
-         */
         $namaLokasi = '-';
         $gedung = '-';
         $lantai = '-';
         $ruang = '-';
 
-        // Contoh asumsi struktur: 
-        // Jika model Location bertingkat (parent-child), atau memiliki kolom langsung:
         $roomName   = $activeLocation->room ?? $activeLocation->name ?? '-';
         $floorName  = $activeLocation->floor ?? '-';
         $buildingName = $activeLocation->building ?? '-';
         $parentLocName = $activeLocation->parent->name ?? '-';
 
-        // Logika pengisian kolom terpisah (bisa disesuaikan dengan skema database Anda):
         $ruang = $roomName;
         $lantai = $floorName;
         $gedung = $buildingName !== '-' ? $buildingName : ($activeLocation->parent->building ?? '-');
         $namaLokasi = $parentLocName !== '-' ? $parentLocName : ($activeLocation->name ?? '-');
 
-        $locationDesc = $activeLocation->description ?? '-';
         $picName = $activeLocation->pic_name ?? '-';
         $departmentName = $activeLocation->department_name ?? '-';
 
@@ -209,7 +200,6 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
             $gedung,
             $lantai,
             $ruang,
-            $locationDesc,
             $picName,
             $departmentName,
             $asset->purchase_date ? Carbon::parse($asset->purchase_date)->format('d M Y') : '-',
@@ -225,8 +215,8 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
     public function columnFormats(): array
     {
         return [
-            'O' => '"Rp "#,##0', // Kolom Harga Aset (Rp) bergeser ke huruf O
-            'P' => '"Rp "#,##0', // Kolom Nilai Buku (Rp) bergeser ke huruf P
+            'N' => '"Rp "#,##0', // Kolom Harga Aset (Rp) pada huruf N
+            'O' => '"Rp "#,##0', // Kolom Nilai Buku (Rp) pada huruf O
         ];
     }
 
@@ -235,8 +225,8 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                // Total kolom dari A sampai S (19 Kolom)
-                $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
+                // Total kolom dari A sampai R (18 Kolom)
+                $columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'];
 
                 foreach ($columns as $column) {
                     if ($column === 'A') {
@@ -251,7 +241,7 @@ class AssetsExport implements FromCollection, WithHeadings, WithMapping, ShouldA
                 }
 
                 $sheet->getRowDimension(1)->setRowHeight(25);
-                $sheet->getStyle('A1:S1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('A1:R1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
             },
         ];
     }
